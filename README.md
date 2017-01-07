@@ -10,7 +10,7 @@ npm install weex-previewer
 ``` js
 var preview = require('weex-previewer');
 preview({
-  host: 127.0.0.1,
+  host: "192.168.34.19",
   entry: 'src/index.vue'   
 });
 
