@@ -47,18 +47,8 @@ const defaultParams = {
   transformPath:'',
   notopen: false,
 };
-const WEEX_FILE_EXT = "we"
-const WEEX_TRANSFORM_TMP = "weex_tmp"
-const H5_Render_DIR = "h5_render"
-const NO_PORT_SPECIFIED =  -1
-const DEFAULT_HTTP_PORT  = "8081"
-const DEFAULT_WEBSOCKET_PORT = "8082"
-const NO_JSBUNDLE_OUTPUT = "no JSBundle output"
-
-//will update when argvProcess function call
-var HTTP_PORT = NO_PORT_SPECIFIED         
-var WEBSOCKET_PORT   = NO_PORT_SPECIFIED  
-
+const WEEX_FILE_EXT = "we";
+const NO_PORT_SPECIFIED =  -1;
 webpackLoader.setLogLevel("WARN")
 
 let Previewer = {
@@ -181,7 +171,7 @@ let Previewer = {
 
         let filesInTarget = fs.readdirSync(inputPath)
         filesInTarget = _.filter(filesInTarget , (fileName)=>(fileName.length > 2 ) )        
-        filesInTarget = _.filter(filesInTarget , (fileName)=>( fileName.substring(fileName.length - 2 ,  fileName.length) ==  WEEX_FILE_EXT ) )
+        filesInTarget = _.filter(filesInTarget , (fileName)=>( fileName.substring(fileName.length - 2 ,  fileName.length) ==  WEEX_FILE_EXT ))
 
         let filesInTargetPromiseList  = _.map(filesInTarget , function(fileName){
             let ip = path.join( inputPath , fileName)
@@ -319,7 +309,7 @@ let Previewer = {
           self.showQR();
           return;
       }
-      let previewUrl = `http://${self.params.host}:${port}/${WEEX_TRANSFORM_TMP}/${H5_Render_DIR}/?hot-reload_controller&page=${fileName}&loader=xhr`;
+      let previewUrl = `http://${self.params.host}:${port}/${self.params.temDir}/${self.params.h5RenderDir}/?hot-reload_controller&page=${fileName}&loader=xhr`;
       let vueRegArr = [
         {
           rule: /{{\$script}}/,
