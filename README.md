@@ -1,4 +1,7 @@
 # weex-previewer
+
+[![npm](https://img.shields.io/npm/v/weex-previewer.svg?maxAge=2592000)]()
+
 a tool help user to preview their weex files
 
 ### how to use

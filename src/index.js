@@ -36,8 +36,7 @@ const defaultParams = {
   entry: '',
   output: '',
   fileExt: ['vue','we'],
-  temDir: 'weex_tmp',
-  h5RenderDir: 'h5_render',
+  temDir: path.join(os.homedir(),'weex_tmp'),
   port: '8081',
   host: '127.0.0.1',
   output: 'no JSBundle output',
@@ -49,7 +48,8 @@ const defaultParams = {
 };
 const WEEX_FILE_EXT = "we";
 const NO_PORT_SPECIFIED =  -1;
-webpackLoader.setLogLevel("WARN")
+
+webpackLoader.setLogLevel("WARN");
 
 let Previewer = {
   init: function(args) {
@@ -93,7 +93,7 @@ let Previewer = {
     let output = this.params.ouput;
     if (this.params.output == 'no JSBundle output'){
       this.params.output = null;
-      this.initTemDir();
+     // this.initTemDir();
       this.serverMark = true;                          
     }
 
@@ -135,7 +135,6 @@ let Previewer = {
     fs.mkdirSync(this.params.temDir)
     fse.copySync(`${__dirname}/../vue-template/template` , `${this.params.temDir}/${this.params.h5RenderDir}`);
     fse.mkdirsSync(`${this.params.temDir}/${this.params.h5RenderDir}`);
-    
   },
   
   buildBundle() {
@@ -147,7 +146,7 @@ let Previewer = {
     let self = this;        
     if (fs.lstatSync(inputPath).isFile()){
       if(this.fileType == 'vue') {
-        transformP = fsUtils.replace(path.join(`${self.params.temDir}/${self.params.h5RenderDir}/`,'app.js'),[
+        transformP = fsUtils.replace(path.join(`${self.params.temDir}/`,'app.js'),[
           {
             rule: "{{$module}}",
             scripts: path.join(process.cwd(),inputPath) ,
@@ -257,12 +256,12 @@ let Previewer = {
     if (outputPath){
         bundleWritePath = outputPath
     }else{
-        bundleWritePath = path.join(this.fileDir,`${this.params.temDir}/${this.params.h5RenderDir}/${module}.js`);
+        bundleWritePath = path.join(`${this.params.temDir}/${module}.js`);
     }
     inputPath = path.resolve(inputPath);
     let entryValue = '';
     if(this.fileType == 'vue') {
-      entryValue = path.join(this.fileDir,this.params.temDir,this.params.h5RenderDir,'app.js') + '?entry=true';  
+      entryValue = path.join(this.params.temDir,'app.js') + '?entry=true';  
     }else {
       entryValue = inputPath + '?entry=true';  
     }
@@ -275,7 +274,7 @@ let Previewer = {
   
   startWebServer(fileName) {
     let options = {
-        root: ".",
+        root: this.params.temDir,
         cache: "-1",
         showDir: true,
         autoIndex: true
@@ -289,8 +288,7 @@ let Previewer = {
         options.before = [ fsUtils.getTransformerWraper(process.cwd(), self.transformTarget ) ]     
     }
     self.bindProcessEvent();
-    let server = httpServer.createServer();
-    
+    let server = httpServer.createServer(options);
     let port = this.params.port;
     //npmlog.info(`http port: ${port}`)        
     server.listen(port, "0.0.0.0", function () {
@@ -309,7 +307,7 @@ let Previewer = {
           self.showQR();
           return;
       }
-      let previewUrl = `http://${self.params.host}:${port}/${self.params.temDir}/${self.params.h5RenderDir}/?hot-reload_controller&page=${fileName}&loader=xhr`;
+      let previewUrl = `http://${self.params.host}:${port}/?hot-reload_controller&page=${fileName}&loader=xhr`;
       let vueRegArr = [
         {
           rule: /{{\$script}}/,
@@ -341,7 +339,9 @@ let Previewer = {
       if(/\.we$/.test(self.params.entry)) {
         regarr = weRegArr; 
       }
-      fsUtils.replace(path.join(`${self.params.temDir}/${self.params.h5RenderDir}/`,'weex.html'),regarr).then(() => {
+      
+      console.log(path.join(`${self.params.temDir}/`,'weex.html'));
+      fsUtils.replace(path.join(`${self.params.temDir}/`,'weex.html'),regarr).then(() => {
         self.open(previewUrl);
          
       }).catch((err) => {
@@ -356,7 +356,7 @@ let Previewer = {
   showQR(){
     let IP = this.getIP();   
     let wsport = this.params.websocketPort;
-    let jsBundleURL = `http://${IP}:${this.params.port}/${this.params.temDir}/${this.params.h5RenderDir}/${this.module}.js?wsport=${this.params.websocketPort}`;
+    let jsBundleURL = `http://${IP}:${this.params.port}/${this.module}.js?wsport=${this.params.websocketPort}`;
     // npmlog output will broken QR in some case ,some we using console.log
     console.log(`The following QR encoding url is\n${jsBundleURL}\n`);
     qrcode.generate(jsBundleURL,{small: this.params.smallqr});
@@ -375,14 +375,14 @@ let Previewer = {
     }); 
    process.on('SIGINT', function () {
         console.log(chalk.green("weex  server stoped"));
-        fsUtils.deleteFolderRecursive(self.params.temDir)        
+       // fsUtils.deleteFolderRecursive(self.params.temDir)        
         process.exit() 
     }) 
 
    
     process.on('SIGTERM', function () {
         console.log(chalk.green("weex server stoped"));
-        fsUtils.deleteFolderRecursive(self.params.temDir);
+     //   fsUtils.deleteFolderRecursive(self.params.temDir);
         process.exit() 
     })  
   },
