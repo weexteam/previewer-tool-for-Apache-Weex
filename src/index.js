@@ -22,9 +22,6 @@ const wsServer = require('ws').Server;
 const watch =  require('node-watch');
 const os = require('os');
 const _ = require("underscore");
-const webpack = require('webpack');
-const webpackLoader = require('weex-loader');
-const qrcode = require('qrcode-terminal-alpha'); 
 const chalk = require('chalk');
 const nwUtils =  require('./libs/nw-utils');      
 const fsUtils = require('./libs/fs-utils');
@@ -46,27 +43,27 @@ const defaultParams = {
   transformPath:'',
   notopen: false,
 };
-const WEEX_FILE_EXT = "we";
-const NO_PORT_SPECIFIED =  -1;
 
-webpackLoader.setLogLevel("WARN");
+
 
 let Previewer = {
   init: function(args) {
-    if(args['_'].length == 0) {
-      return;
+    if(args['_'] && args['_'].length>0) {
+      let entry = args['_'][0];
+      args.entry = entry;
     }
-    let entry = args['_'][0];
-    if(!this.__isWorkFile(entry)) {
+    
+    if(!this.__isWorkFile(args.entry)) {
       return console.log('Not a ".vue" or ".we" file');   
     }
-    args.entry = entry;
+    
     if(args.port <=0 || args.port >= 65336) {
       this.params.port = 8081;
     }
+    
     this.params = Object.assign({},defaultParams,args);
     
-    this.file = path.basename(entry);
+    this.file = path.basename(this.params.entry);
     this.module = this.file.replace(/\..+/, '');
     this.fileType = /\.vue$/.test(this.file) ? 'vue':'we';
     this.fileDir = process.cwd();
@@ -127,6 +124,8 @@ let Previewer = {
           return;
         }  
       }
+    }).catch((err) => {
+      npmlog.error(err); 
     });
     
     return;
@@ -191,8 +190,7 @@ let Previewer = {
 
         let filesInTarget = fs.readdirSync(inputPath)
         filesInTarget = _.filter(filesInTarget , (fileName)=>(fileName.length > 2 ) )        
-        filesInTarget = _.filter(filesInTarget , (fileName)=>( fileName.substring(fileName.length - 2 ,  fileName.length) ==  WEEX_FILE_EXT ))
-
+        filesInTarget = _.filter(filesInTarget , (fileName)=>( fileName.substring(fileName.length - 2 ,  fileName.length) ==  'we' ))
         let filesInTargetPromiseList  = _.map(filesInTarget , function(fileName){
             let ip = path.join( inputPath , fileName)
             fileName = fileName.replace(/\.(we|vue)/, '')                            
@@ -314,22 +312,22 @@ let Previewer = {
     //npmlog.info(`http port: ${port}`)        
     server.listen(port, "0.0.0.0", function () {
       npmlog.info((new Date()) + `http  is listening on port ${port}`)
-
+      let IP =  nwUtils.getLocalIP();
       if (self.transformServerPath){
-          let IP =  nwUtils.getPublicIP()
+          IP =  nwUtils.getLocalIP();
           if (self.params.host != DEFAULT_HOST){
               IP = self.params.host;
           }
           npmlog.info(`target file in local path ${self.parmas.transformPath} will be transformer to JS bundle\nplease access http://${IP}:${port}/`);
           return;
       }
-
+      
       if (self.params.qr || self.params.smallqr){
          // self.showQR();
           return;
       }
       
-      let previewUrl = `http://${self.params.host}:${port}/?hot-reload_controller&page=${self.module}.js&loader=xhr`;
+      let previewUrl = `http://${IP}:${port}/?hot-reload_controller&page=${self.module}.js&loader=xhr`;
       let vueRegArr = [
         {
           rule: /{{\$script}}/,
@@ -361,7 +359,6 @@ let Previewer = {
       if(/\.we$/.test(self.params.entry)) {
         regarr = weRegArr; 
       }
-      console.log(regarr);
       fsUtils.replace(path.join(`${self.params.temDir}/`,'weex.html'),regarr).then(() => {
         self.open(previewUrl);
          

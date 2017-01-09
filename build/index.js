@@ -40,9 +40,6 @@ var wsServer = require('ws').Server;
 var watch = require('node-watch');
 var os = require('os');
 var _ = require("underscore");
-var webpack = require('webpack');
-var webpackLoader = require('weex-loader');
-var qrcode = require('qrcode-terminal-alpha');
 var chalk = require('chalk');
 var nwUtils = require('./libs/nw-utils');
 var fsUtils = require('./libs/fs-utils');
@@ -58,27 +55,25 @@ var defaultParams = (_defaultParams = {
   port: '8081',
   host: '127.0.0.1'
 }, (0, _defineProperty3.default)(_defaultParams, 'output', 'no JSBundle output'), (0, _defineProperty3.default)(_defaultParams, 'websocketPort', '8082'), (0, _defineProperty3.default)(_defaultParams, 'qr', false), (0, _defineProperty3.default)(_defaultParams, 'smallqr', false), (0, _defineProperty3.default)(_defaultParams, 'transformPath', ''), (0, _defineProperty3.default)(_defaultParams, 'notopen', false), _defaultParams);
-var WEEX_FILE_EXT = "we";
-var NO_PORT_SPECIFIED = -1;
-
-webpackLoader.setLogLevel("WARN");
 
 var Previewer = {
   init: function init(args) {
-    if (args['_'].length == 0) {
-      return;
+    if (args['_'] && args['_'].length > 0) {
+      var entry = args['_'][0];
+      args.entry = entry;
     }
-    var entry = args['_'][0];
-    if (!this.__isWorkFile(entry)) {
+
+    if (!this.__isWorkFile(args.entry)) {
       return console.log('Not a ".vue" or ".we" file');
     }
-    args.entry = entry;
+
     if (args.port <= 0 || args.port >= 65336) {
       this.params.port = 8081;
     }
+
     this.params = (0, _assign2.default)({}, defaultParams, args);
 
-    this.file = path.basename(entry);
+    this.file = path.basename(this.params.entry);
     this.module = this.file.replace(/\..+/, '');
     this.fileType = /\.vue$/.test(this.file) ? 'vue' : 'we';
     this.fileDir = process.cwd();
@@ -140,6 +135,8 @@ var Previewer = {
           return;
         }
       }
+    }).catch(function (err) {
+      npmlog.error(err);
     });
 
     return;
@@ -206,9 +203,8 @@ var Previewer = {
         return fileName.length > 2;
       });
       filesInTarget = _.filter(filesInTarget, function (fileName) {
-        return fileName.substring(fileName.length - 2, fileName.length) == WEEX_FILE_EXT;
+        return fileName.substring(fileName.length - 2, fileName.length) == 'we';
       });
-
       var filesInTargetPromiseList = _.map(filesInTarget, function (fileName) {
         var ip = path.join(inputPath, fileName);
         fileName = fileName.replace(/\.(we|vue)/, '');
@@ -323,9 +319,9 @@ var Previewer = {
     //npmlog.info(`http port: ${port}`)        
     server.listen(port, "0.0.0.0", function () {
       npmlog.info(new Date() + ('http  is listening on port ' + port));
-
+      var IP = nwUtils.getLocalIP();
       if (self.transformServerPath) {
-        var IP = nwUtils.getPublicIP();
+        IP = nwUtils.getLocalIP();
         if (self.params.host != DEFAULT_HOST) {
           IP = self.params.host;
         }
@@ -338,7 +334,7 @@ var Previewer = {
         return;
       }
 
-      var previewUrl = 'http://' + self.params.host + ':' + port + '/?hot-reload_controller&page=' + self.module + '.js&loader=xhr';
+      var previewUrl = 'http://' + IP + ':' + port + '/?hot-reload_controller&page=' + self.module + '.js&loader=xhr';
       var vueRegArr = [{
         rule: /{{\$script}}/,
         scripts: '\n<script src="./assets/phantom-limb.js"></script>\n<script src="./assets/vue.runtime.js"></script>\n<script src="./assets/weex-vue-render/index.js"></script>\n      '
@@ -357,7 +353,6 @@ var Previewer = {
       if (/\.we$/.test(self.params.entry)) {
         regarr = weRegArr;
       }
-      console.log(regarr);
       fsUtils.replace(path.join(self.params.temDir + '/', 'weex.html'), regarr).then(function () {
         self.open(previewUrl);
       }).catch(function (err) {
