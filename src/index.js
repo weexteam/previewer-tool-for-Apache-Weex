@@ -29,8 +29,8 @@ const chalk = require('chalk');
 const nwUtils =  require('./libs/nw-utils');      
 const fsUtils = require('./libs/fs-utils');
 const displayUtils = require('./libs/display-utils');         
-const weexConfig = require('./libs/weex.config')
-
+const weexConfig = require('./libs/weex.config');
+const builder = require('weex-builder');
 
 const defaultParams = {
   entry: '',
@@ -93,7 +93,7 @@ let Previewer = {
     let output = this.params.ouput;
     if (this.params.output == 'no JSBundle output'){
       this.params.output = null;
-     // this.initTemDir();
+      this.initTemDir();
       this.serverMark = true;                          
     }
 
@@ -108,10 +108,31 @@ let Previewer = {
     }catch(e){
         //fs.lstatSync my raise when outputPath is file but not exist yet.
     }
+    let self = this;
+    builder.build(entry,this.params.temDir,{
+      options: true,
+    }).then((arr) => {
+      if(arr.length > 0) {
+        if (self.serverMark == true) {  // typeof jsBundlePathForRender == "string"
 
+            //no js bundle output specified, start server for playgroundApp(now) or H5 renderer.
+          self.startWebServer();
+          self.startWebSocket();
+          return;
+
+        }else{
+          npmlog.info('weex JS bundle saved at ' + path.resolve(outputPath)); 
+          return;
+        }  
+      }
+    });
+    
+    return;
     if (this.params.watch){
       npmlog.info(`watching ${entry}`);
       let self = this;
+      
+      //
       watch(entry, function (fileName){
           if (/\.(we|vue)$/gi.test(fileName)){
               npmlog.info(`${fileName} updated`)
@@ -131,15 +152,12 @@ let Previewer = {
   
   // build temp directory for web preview
   initTemDir() {
-    fse.removeSync(this.params.temDir);
-    fs.mkdirSync(this.params.temDir)
-    fse.copySync(`${__dirname}/../vue-template/template` , `${this.params.temDir}/${this.params.h5RenderDir}`);
-    fse.mkdirsSync(`${this.params.temDir}/${this.params.h5RenderDir}`);
+   // fse.removeSync(this.params.temDir);
+    //fs.mkdirSync(this.params.temDir)
+    fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
+    //fse.mkdirsSync(`${this.params.temDir}/${this.params.h5RenderDir}`);
   },
   
-  buildBundle() {
-    
-  },
   
   transforme(inputPath,outputPath){
     let transformP;
@@ -304,10 +322,11 @@ let Previewer = {
       }
 
       if (self.params.qr || self.params.smallqr){
-          self.showQR();
+         // self.showQR();
           return;
       }
-      let previewUrl = `http://${self.params.host}:${port}/?hot-reload_controller&page=${fileName}&loader=xhr`;
+      
+      let previewUrl = `http://${self.params.host}:${port}/?hot-reload_controller&page=${self.module}.js&loader=xhr`;
       let vueRegArr = [
         {
           rule: /{{\$script}}/,
@@ -319,7 +338,7 @@ let Previewer = {
         },
         {
           rule: /{{\$script2}}/,
-          scripts:'<script src="' + self.module +  '.web.js"></script>', 
+          scripts:'<script src="' + self.module +  '.js"></script>', 
         }
       ];
       let weRegArr = [
@@ -339,8 +358,7 @@ let Previewer = {
       if(/\.we$/.test(self.params.entry)) {
         regarr = weRegArr; 
       }
-      
-      console.log(path.join(`${self.params.temDir}/`,'weex.html'));
+      console.log(regarr);
       fsUtils.replace(path.join(`${self.params.temDir}/`,'weex.html'),regarr).then(() => {
         self.open(previewUrl);
          
@@ -417,7 +435,6 @@ let Previewer = {
         if (!!fileName.match(`${self.params.temDir}`))  {
             return
         }
-        console.log(fileName);
         if (/\.(js|we|vue)$/gi.test(fileName)){
             let transformP  = self.transformTarget(self.params.entry, self.params.output)
             transformP.then( function(fileName){

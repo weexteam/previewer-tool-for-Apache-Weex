@@ -1,12 +1,12 @@
 {
   "name": "weex-previewer",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "a tool help user to preview their weex files",
   "main": "build/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "gulp",
-    "postinstall" :"node ./src/hook/post-install.js"
+    "postinstall": "node ./src/hook/post-install.js"
   },
   "repository": {
     "type": "git",
@@ -42,12 +42,14 @@
     "path": "^0.12.7",
     "prompt": "^1.0.0",
     "qrcode-terminal-alpha": "^0.11.0",
+    "quick-local-ip": "^1.0.7",
     "split-command": "0.0.7",
     "underscore": "^1.8.3",
     "uuid": "^2.0.2",
     "vue-loader": "^10.0.2",
     "vue-template-compiler": "^2.1.8",
     "webpack": "^1.13.1",
+    "weex-builder": "^0.1.3",
     "weex-components": "^0.2.0",
     "weex-html5": "^0.4.1",
     "weex-loader": "^0.3.4",
@@ -68,7 +70,6 @@
     "vinyl-source-stream": "^1.1.0",
     "vue": "^2.0.3"
   },
-  
   "bugs": {
     "url": "https://github.com/weexteam/weex-previewer/issues"
   },
