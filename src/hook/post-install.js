@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const fse = require('fs-extra');
 const home = os.homedir();
-const WEEX_TEMP = 'weex_tmp';
+const WEEX_TEMP = '.weex_tmp';
 const previewDir = path.join(home,WEEX_TEMP);
 
 if(!fs.existsSync(previewDir)) {

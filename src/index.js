@@ -36,7 +36,7 @@ const defaultParams = {
   entry: '',
   output: '',
   fileExt: ['vue','we'],
-  temDir: path.join(os.homedir(),'weex_tmp'),
+  temDir: path.join(os.homedir(),'.weex_tmp'),
   port: '8081',
   host: '127.0.0.1',
   output: 'no JSBundle output',
@@ -93,7 +93,9 @@ let Previewer = {
     let output = this.params.ouput;
     if (this.params.output == 'no JSBundle output'){
       this.params.output = null;
-      this.initTemDir();
+      if(!this.initTemDir()) {
+        return;  
+      };
       this.serverMark = true;                          
     }
 
@@ -152,12 +154,13 @@ let Previewer = {
   
   // build temp directory for web preview
   initTemDir() {
-   // fse.removeSync(this.params.temDir);
-    //fs.mkdirSync(this.params.temDir)
+    if(!fs.existsSync(this.params.temDir) || !fs.existsSync(path.join(this.params.temDir,'index.html')) || !fs.existsSync(path.join(this.params.temDir,'weex.html'))) {
+      npmlog.error('Some bad enviroment.Please run "npm install weex-previewer --save"');
+      return false; 
+    }
     fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
-    //fse.mkdirsSync(`${this.params.temDir}/${this.params.h5RenderDir}`);
+    return true;
   },
-  
   
   transforme(inputPath,outputPath){
     let transformP;
