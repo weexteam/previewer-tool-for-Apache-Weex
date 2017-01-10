@@ -120,7 +120,7 @@ var Previewer = {
     }
     var self = this;
     builder.build(entry, this.params.temDir, {
-      options: true
+      web: true
     }).then(function (arr) {
       if (arr.length > 0) {
         if (self.serverMark == true) {
@@ -420,11 +420,15 @@ var Previewer = {
       if (!!fileName.match('' + self.params.temDir)) {
         return;
       }
-      if (/\.(js|we|vue)$/gi.test(fileName)) {
-        var transformP = self.transformTarget(self.params.entry, self.params.output);
-        transformP.then(function (fileName) {
-          console.log('refresh!');
+      if (/\.(js|we|vue)$/gi.test(self.params.entry)) {
+        var transformP = builder.build(self.params.entry, self.params.temDir, {
+          web: true
+        });
+        transformP.then(function (arr) {
+          console.log('file refresh!');
           self.wsConnection.send("refresh");
+        }).catch(function (err) {
+          console.log(err);
         });
       }
     });

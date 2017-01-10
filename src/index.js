@@ -109,7 +109,7 @@ let Previewer = {
     }
     let self = this;
     builder.build(entry,this.params.temDir,{
-      options: true,
+      web: true,
     }).then((arr) => {
       if(arr.length > 0) {
         if (self.serverMark == true) {  // typeof jsBundlePathForRender == "string"
@@ -160,6 +160,7 @@ let Previewer = {
     fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
     return true;
   },
+  
   
   transforme(inputPath,outputPath){
     let transformP;
@@ -422,9 +423,9 @@ let Previewer = {
         ws.on('message', function incoming(message) {
             npmlog.info('received: %s', message);
         });
-        ws.send("ws server ok")
-        self.wsConnection = ws
-        self.watchForWSRefresh(fileName)
+        ws.send("ws server ok");
+        self.wsConnection = ws;
+        self.watchForWSRefresh(fileName); 
     })
   },
   
@@ -435,12 +436,16 @@ let Previewer = {
         if (!!fileName.match(`${self.params.temDir}`))  {
             return
         }
-        if (/\.(js|we|vue)$/gi.test(fileName)){
-            let transformP  = self.transformTarget(self.params.entry, self.params.output)
-            transformP.then( function(fileName){
-                console.log('refresh!');
-                self.wsConnection.send("refresh");                    
-            })
+        if (/\.(js|we|vue)$/gi.test(self.params.entry)){
+            let transformP  = builder.build(self.params.entry,self.params.temDir,{
+              web: true,
+            });
+            transformP.then( function(arr){
+              console.log('file refresh!');
+              self.wsConnection.send("refresh");                    
+            }).catch((err) => {
+              console.log(err);
+            });
         }
     });
   },
