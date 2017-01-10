@@ -42,6 +42,8 @@ const defaultParams = {
   open: true,
 };
 
+const APP_TEMP_PATH = 'app.js';
+
 let Previewer = {
   init: function(args) {
     if(args['_'] && args['_'].length>0) {
@@ -52,12 +54,11 @@ let Previewer = {
     if(!this.__isWorkFile(args.entry)) {
       return console.log('Not a ".vue" or ".we" file');   
     }
-    
     if(args.port <=0 || args.port >= 65336) {
       this.params.port = 8081;
     }
     this.params = Object.assign({},defaultParams,args);
-    
+    this.params.source = this.params.entry;
     this.file = path.basename(this.params.entry);
     this.module = this.file.replace(/\..+/, '');
     this.fileType = /\.vue$/.test(this.file) ? 'vue':'we';
@@ -94,31 +95,20 @@ let Previewer = {
       this.buildJSFile(); 
       return;
     }
-    
-    try{        
-      if (fs.lstatSync(entry).isFile()){
-
-        if (fs.lstatSync(entry).isDirectory()){
-          let module = this.module;            
-          this.params.output =  params.output = path.join(output , `${module}.js`)
-        }
-      }
-    }catch(e){
-        //fs.lstatSync my raise when outputPath is file but not exist yet.
-    }
     let self = this;
     if(this.fileType == 'vue') {
-      fsUtils.replace(path.join(this.params.temDir,'app.js'),[
+      fse.copySync(`${__dirname}/../vue-template/template/app.js` , APP_TEMP_PATH);
+      fsUtils.replace(path.join(APP_TEMP_PATH),[
         {
           rule: "{{$module}}",
           scripts: path.join(process.cwd(),this.params.entry) ,
         }
       ]).then(() => {
-        self.params.source = self.params.entry;
+        
         self.module = 'app';
-        self.params.entry = path.join(this.params.temDir,'app.js');
+        self.params.entry = APP_TEMP_PATH;
         self.buildJSFile();
-
+       // fs.unlinkSync(APP_TEMP_PATH);
       })   
     } else {
       self.buildJSFile(); 
@@ -133,15 +123,27 @@ let Previewer = {
       return false; 
     }
     fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
-    fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
+    //fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
     return true;
   },
   
   buildJSFile() {
     let self = this;
+    if(this.fileType == 'vue') {
+      builder.build(this.params.source,path.join(this.params.temDir,this.module + '.weex.js'),{
+        web: false,
+        ext: /\.js$/.test(this.params.entry)?'js':this.fileType,
+      }).then((arr) => {
+        if(arr.length > 0) {
+          npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));   
+        }
+      }).catch((err) => {
+        npmlog.error(err); 
+      });   
+    }
     builder.build(this.params.entry,this.params.temDir,{
       web: true,
-      ext: /\.js$/.test(this.params.entry)?'js':this.params.fileType,
+      ext: /\.js$/.test(this.params.entry)?'js':this.fileType,
     }).then((arr) => {
       if(arr.length > 0) {
         if (self.serverMark == true) {  // typeof jsBundlePathForRender == "string"
@@ -150,7 +152,7 @@ let Previewer = {
           return;
 
         }else{
-          npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir)); 
+         // npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir)); 
           return;
         }  
       }
@@ -167,13 +169,6 @@ let Previewer = {
         autoIndex: true
     }
     let self = this;
-
-    if (this.params.transformPath){
-        options.root = this.params.transformPath;
-        options.before = [ fsUtils.getTransformerWraper(options.root, self.transformTarget ) ];   
-    }else{
-        options.before = [ fsUtils.getTransformerWraper(process.cwd(), self.transformTarget ) ]     
-    }
     self.bindProcessEvent();
     let server = httpServer.createServer(options);
     let port = this.params.port;
@@ -189,13 +184,13 @@ let Previewer = {
           npmlog.info(`target file in local path ${self.parmas.transformPath} will be transformer to JS bundle\nplease access http://${IP}:${port}/`);
           return;
       }
-      
+      // qrcode has moved to the website
       if (self.params.qr || self.params.smallqr){
          // self.showQR();
           return;
       }
       
-      let previewUrl = `http://${IP}:${port}/?hot-reload_controller&page=${self.module}.js&loader=xhr`;
+      let previewUrl = `http://${IP}:${port}/?hot-reload_controller&page=${self.module}.js&loader=xhr&wsport=${self.params.wsport}&type=${self.fileType}`;
       let vueRegArr = [
         {
           rule: /{{\$script}}/,
@@ -236,16 +231,6 @@ let Previewer = {
       })
       
     });
-  },
-  
-  showQR(){
-    let IP = this.getIP();   
-    let wsport = this.params.wsport;
-    let jsBundleURL = `http://${IP}:${this.params.port}/${this.module}.js?wsport=${this.params.wsport}`;
-    // npmlog output will broken QR in some case ,some we using console.log
-    console.log(`The following QR encoding url is\n${jsBundleURL}\n`);
-    qrcode.generate(jsBundleURL,{small: this.params.smallqr});
-    console.log("\nPlease download Weex Playground app from https://github.com/alibaba/weex and scan this QR code to run your app, make sure your phone is connected to the same Wi-Fi network as your computer runing WeexToolkit.\n")
   },
   
   bindProcessEvent() {
@@ -293,13 +278,14 @@ let Previewer = {
   
   watchForWSRefresh(fileName){
     let self = this;
-    fs.watch(this.params.entry, function(fileName){
+    fs.watch(this.params.source, function(fileName){
         if (!!fileName.match(`${self.params.temDir}`))  {
             return
         }
         if (/\.(js|we|vue)$/gi.test(self.params.entry)){
             let transformP  = builder.build(self.params.entry,self.params.temDir,{
               web: true,
+              ext: /\.js$/.test(self.params.entry)?'js':self.fileType,
             });
             transformP.then( function(arr){
               console.log('file refresh!');
@@ -310,7 +296,6 @@ let Previewer = {
         }
     });
   },
-  
   open(url) {
     if (this.params.open){
       opener(url);

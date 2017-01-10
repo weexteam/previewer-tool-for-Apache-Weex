@@ -40,11 +40,15 @@
       return match && match[1]
     }
     var module = getUrlParam('page') || 'app.js';
+    if(getUrlParam('type') == 'vue') {
+      module = module.replace(/\.js$/,'.weex.js');
+    }
     var protocol = location.protocol + '//'
     var hostname = location.hostname;
     var wsport = getUrlParam('wsport') || '8082';
     var port = location.port ? ':' + location.port : '';
     var url = protocol + hostname + port + location.pathname.replace(/\/index\.html$/, '/').replace(/\/$/,'/' + module);
+    
     new Vue({
       el: '#app',
       template: '#app-template',

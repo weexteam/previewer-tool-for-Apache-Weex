@@ -50,6 +50,8 @@ var defaultParams = (_defaultParams = {
   host: '127.0.0.1'
 }, (0, _defineProperty3.default)(_defaultParams, 'output', 'no JSBundle output'), (0, _defineProperty3.default)(_defaultParams, 'wsport', '8082'), (0, _defineProperty3.default)(_defaultParams, 'qr', false), (0, _defineProperty3.default)(_defaultParams, 'smallqr', false), (0, _defineProperty3.default)(_defaultParams, 'transformPath', ''), (0, _defineProperty3.default)(_defaultParams, 'open', true), _defaultParams);
 
+var APP_TEMP_PATH = 'app.js';
+
 var Previewer = {
   init: function init(args) {
     if (args['_'] && args['_'].length > 0) {
@@ -60,12 +62,11 @@ var Previewer = {
     if (!this.__isWorkFile(args.entry)) {
       return console.log('Not a ".vue" or ".we" file');
     }
-
     if (args.port <= 0 || args.port >= 65336) {
       this.params.port = 8081;
     }
     this.params = (0, _assign2.default)({}, defaultParams, args);
-
+    this.params.source = this.params.entry;
     this.file = path.basename(this.params.entry);
     this.module = this.file.replace(/\..+/, '');
     this.fileType = /\.vue$/.test(this.file) ? 'vue' : 'we';
@@ -88,8 +89,6 @@ var Previewer = {
   },
 
   fileFlow: function fileFlow() {
-    var _this = this;
-
     var entry = this.params.entry;
     var output = this.params.ouput;
     if (this.params.output == 'no JSBundle output') {
@@ -103,28 +102,18 @@ var Previewer = {
       this.buildJSFile();
       return;
     }
-
-    try {
-      if (fs.lstatSync(entry).isFile()) {
-
-        if (fs.lstatSync(entry).isDirectory()) {
-          var _module = this.module;
-          this.params.output = params.output = path.join(output, _module + '.js');
-        }
-      }
-    } catch (e) {
-      //fs.lstatSync my raise when outputPath is file but not exist yet.
-    }
     var self = this;
     if (this.fileType == 'vue') {
-      fsUtils.replace(path.join(this.params.temDir, 'app.js'), [{
+      fse.copySync(__dirname + '/../vue-template/template/app.js', APP_TEMP_PATH);
+      fsUtils.replace(path.join(APP_TEMP_PATH), [{
         rule: "{{$module}}",
         scripts: path.join(process.cwd(), this.params.entry)
       }]).then(function () {
-        self.params.source = self.params.entry;
+
         self.module = 'app';
-        self.params.entry = path.join(_this.params.temDir, 'app.js');
+        self.params.entry = APP_TEMP_PATH;
         self.buildJSFile();
+        // fs.unlinkSync(APP_TEMP_PATH);
       });
     } else {
       self.buildJSFile();
@@ -139,14 +128,26 @@ var Previewer = {
       return false;
     }
     fse.copySync(__dirname + '/../vue-template/template/weex.html', this.params.temDir + '/weex.html');
-    fse.copySync(__dirname + '/../vue-template/template/app.js', this.params.temDir + '/app.js');
+    //fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
     return true;
   },
   buildJSFile: function buildJSFile() {
     var self = this;
+    if (this.fileType == 'vue') {
+      builder.build(this.params.source, path.join(this.params.temDir, this.module + '.weex.js'), {
+        web: false,
+        ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
+      }).then(function (arr) {
+        if (arr.length > 0) {
+          npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
+        }
+      }).catch(function (err) {
+        npmlog.error(err);
+      });
+    }
     builder.build(this.params.entry, this.params.temDir, {
       web: true,
-      ext: /\.js$/.test(this.params.entry) ? 'js' : this.params.fileType
+      ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
     }).then(function (arr) {
       if (arr.length > 0) {
         if (self.serverMark == true) {
@@ -155,7 +156,7 @@ var Previewer = {
           self.startWebSocket();
           return;
         } else {
-          npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
+          // npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir)); 
           return;
         }
       }
@@ -171,13 +172,6 @@ var Previewer = {
       autoIndex: true
     };
     var self = this;
-
-    if (this.params.transformPath) {
-      options.root = this.params.transformPath;
-      options.before = [fsUtils.getTransformerWraper(options.root, self.transformTarget)];
-    } else {
-      options.before = [fsUtils.getTransformerWraper(process.cwd(), self.transformTarget)];
-    }
     self.bindProcessEvent();
     var server = httpServer.createServer(options);
     var port = this.params.port;
@@ -193,13 +187,13 @@ var Previewer = {
         npmlog.info('target file in local path ' + self.parmas.transformPath + ' will be transformer to JS bundle\nplease access http://' + IP + ':' + port + '/');
         return;
       }
-
+      // qrcode has moved to the website
       if (self.params.qr || self.params.smallqr) {
         // self.showQR();
         return;
       }
 
-      var previewUrl = 'http://' + IP + ':' + port + '/?hot-reload_controller&page=' + self.module + '.js&loader=xhr';
+      var previewUrl = 'http://' + IP + ':' + port + '/?hot-reload_controller&page=' + self.module + '.js&loader=xhr&wsport=' + self.params.wsport + '&type=' + self.fileType;
       var vueRegArr = [{
         rule: /{{\$script}}/,
         scripts: '\n<script src="./assets/phantom-limb.js"></script>\n<script src="./assets/vue.runtime.js"></script>\n<script src="./assets/weex-vue-render/index.js"></script>\n      '
@@ -225,15 +219,6 @@ var Previewer = {
         npmlog.error("replace file failed!");
       });
     });
-  },
-  showQR: function showQR() {
-    var IP = this.getIP();
-    var wsport = this.params.wsport;
-    var jsBundleURL = 'http://' + IP + ':' + this.params.port + '/' + this.module + '.js?wsport=' + this.params.wsport;
-    // npmlog output will broken QR in some case ,some we using console.log
-    console.log('The following QR encoding url is\n' + jsBundleURL + '\n');
-    qrcode.generate(jsBundleURL, { small: this.params.smallqr });
-    console.log("\nPlease download Weex Playground app from https://github.com/alibaba/weex and scan this QR code to run your app, make sure your phone is connected to the same Wi-Fi network as your computer runing WeexToolkit.\n");
   },
   bindProcessEvent: function bindProcessEvent() {
     var self = this;
@@ -277,13 +262,14 @@ var Previewer = {
   },
   watchForWSRefresh: function watchForWSRefresh(fileName) {
     var self = this;
-    fs.watch(this.params.entry, function (fileName) {
+    fs.watch(this.params.source, function (fileName) {
       if (!!fileName.match('' + self.params.temDir)) {
         return;
       }
       if (/\.(js|we|vue)$/gi.test(self.params.entry)) {
         var transformP = builder.build(self.params.entry, self.params.temDir, {
-          web: true
+          web: true,
+          ext: /\.js$/.test(self.params.entry) ? 'js' : self.fileType
         });
         transformP.then(function (arr) {
           console.log('file refresh!');
