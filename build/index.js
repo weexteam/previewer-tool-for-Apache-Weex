@@ -407,8 +407,8 @@ var Previewer = {
       });
       ws.send("ws server ok");
       self.wsConnection = ws;
-      self.watchForWSRefresh(fileName);
     });
+    self.watchForWSRefresh(fileName);
   },
   watchForWSRefresh: function watchForWSRefresh(fileName) {
     var self = this;

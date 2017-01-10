@@ -420,8 +420,8 @@ let Previewer = {
         });
         ws.send("ws server ok");
         self.wsConnection = ws;
-        self.watchForWSRefresh(fileName); 
-    })
+    });
+    self.watchForWSRefresh(fileName); 
   },
   
   watchForWSRefresh(fileName){

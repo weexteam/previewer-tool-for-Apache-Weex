@@ -42,8 +42,9 @@
     }
     let module = getUrlParam('page') || 'app.js';
     var protocol = location.protocol + '//'
-    var hostname = typeof CURRENT_IP === 'string' ? CURRENT_IP : location.hostname
-    var port = location.port ? ':' + location.port : ''
+    var hostname = typeof CURRENT_IP === 'string' ? CURRENT_IP : location.hostname;
+    let wsport = getUrlParam('wsport') || '8082';
+    var port = location.port ? ':' + location.port : '';
     var url = protocol + hostname + port + location.pathname.replace(/\/index\.html$/, '/').replace(/\/$/,'/' + module);
     new Vue({
       el: '#app',
@@ -57,6 +58,32 @@
         qrcodedraw.draw(this.$refs.canvas, this.val.replace('.web',''), function () {})
       }
     })
+    //for hot reload
+    (function startRefreshController() {
+	  if (location.protocol.match(/file/)) {
+	    return;
+	  }
+	  if (location.search.indexOf('hot-reload_controller') === -1) {
+	    return;
+	  }
+	  if (typeof WebSocket === 'undefined') {
+	    console.info('auto refresh need WebSocket support');
+	    return;
+	  }
+	  var host = location.hostname;
+	  var port = wsport;
+	  var client = new WebSocket('ws://' + host + ':' + port + '/', 'echo-protocol');
+	  client.onerror = function () {
+	    console.log('refresh controller websocket connection error');
+	  };
+	  client.onmessage = function (e) {
+	    console.log('Received: \'' + e.data + '\'');
+	    if (e.data === 'refresh') {
+	      location.reload();
+	    }
+	  };
+	})();
   </script>
+  
 </body>
 </html>
