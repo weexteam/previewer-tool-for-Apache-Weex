@@ -54,7 +54,7 @@ var defaultParams = (_defaultParams = {
   temDir: path.join(os.homedir(), '.weex_tmp'),
   port: '8081',
   host: '127.0.0.1'
-}, (0, _defineProperty3.default)(_defaultParams, 'output', 'no JSBundle output'), (0, _defineProperty3.default)(_defaultParams, 'websocketPort', '8082'), (0, _defineProperty3.default)(_defaultParams, 'qr', false), (0, _defineProperty3.default)(_defaultParams, 'smallqr', false), (0, _defineProperty3.default)(_defaultParams, 'transformPath', ''), (0, _defineProperty3.default)(_defaultParams, 'notopen', false), _defaultParams);
+}, (0, _defineProperty3.default)(_defaultParams, 'output', 'no JSBundle output'), (0, _defineProperty3.default)(_defaultParams, 'wsport', '8082'), (0, _defineProperty3.default)(_defaultParams, 'qr', false), (0, _defineProperty3.default)(_defaultParams, 'smallqr', false), (0, _defineProperty3.default)(_defaultParams, 'transformPath', ''), (0, _defineProperty3.default)(_defaultParams, 'notopen', false), _defaultParams);
 
 var Previewer = {
   init: function init(args) {
@@ -363,8 +363,8 @@ var Previewer = {
   },
   showQR: function showQR() {
     var IP = this.getIP();
-    var wsport = this.params.websocketPort;
-    var jsBundleURL = 'http://' + IP + ':' + this.params.port + '/' + this.module + '.js?wsport=' + this.params.websocketPort;
+    var wsport = this.params.wsport;
+    var jsBundleURL = 'http://' + IP + ':' + this.params.port + '/' + this.module + '.js?wsport=' + this.params.wsport;
     // npmlog output will broken QR in some case ,some we using console.log
     console.log('The following QR encoding url is\n' + jsBundleURL + '\n');
     qrcode.generate(jsBundleURL, { small: this.params.smallqr });
@@ -382,13 +382,10 @@ var Previewer = {
     });
     process.on('SIGINT', function () {
       console.log(chalk.green("weex  server stoped"));
-      // fsUtils.deleteFolderRecursive(self.params.temDir)        
       process.exit();
     });
-
     process.on('SIGTERM', function () {
       console.log(chalk.green("weex server stoped"));
-      //   fsUtils.deleteFolderRecursive(self.params.temDir);
       process.exit();
     });
   },
@@ -400,7 +397,7 @@ var Previewer = {
     return IP;
   },
   startWebSocket: function startWebSocket(fileName) {
-    var port = this.params.websocketPort;
+    var port = this.params.wsport;
     var wss = wsServer({ port: port });
     var self = this;
     npmlog.info(new Date() + ('WebSocket  is listening on port ' + port));

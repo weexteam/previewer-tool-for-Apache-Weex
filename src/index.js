@@ -37,7 +37,7 @@ const defaultParams = {
   port: '8081',
   host: '127.0.0.1',
   output: 'no JSBundle output',
-  websocketPort: '8082',
+  wsport: '8082',
   qr: false,
   smallqr: false,
   transformPath:'',
@@ -369,13 +369,12 @@ let Previewer = {
       })
       
     });
-    
   },
   
   showQR(){
     let IP = this.getIP();   
-    let wsport = this.params.websocketPort;
-    let jsBundleURL = `http://${IP}:${this.params.port}/${this.module}.js?wsport=${this.params.websocketPort}`;
+    let wsport = this.params.wsport;
+    let jsBundleURL = `http://${IP}:${this.params.port}/${this.module}.js?wsport=${this.params.wsport}`;
     // npmlog output will broken QR in some case ,some we using console.log
     console.log(`The following QR encoding url is\n${jsBundleURL}\n`);
     qrcode.generate(jsBundleURL,{small: this.params.smallqr});
@@ -393,17 +392,13 @@ let Previewer = {
       process.exit(1);
     }); 
    process.on('SIGINT', function () {
-        console.log(chalk.green("weex  server stoped"));
-       // fsUtils.deleteFolderRecursive(self.params.temDir)        
+        console.log(chalk.green("weex  server stoped"));   
         process.exit() 
     }) 
-
-   
     process.on('SIGTERM', function () {
         console.log(chalk.green("weex server stoped"));
-     //   fsUtils.deleteFolderRecursive(self.params.temDir);
         process.exit() 
-    })  
+    });
   },
   
   getIP () {
@@ -415,7 +410,7 @@ let Previewer = {
   },
   
   startWebSocket(fileName){
-    let port = this.params.websocketPort;
+    let port = this.params.wsport;
     let wss = wsServer({port: port})
     let self = this
     npmlog.info((new Date()) + `WebSocket  is listening on port ${port}`)         
