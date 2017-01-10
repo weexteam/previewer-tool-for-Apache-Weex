@@ -24,7 +24,7 @@ const _ = require("underscore");
 const chalk = require('chalk');
 const nwUtils =  require('./libs/nw-utils');      
 const fsUtils = require('./libs/fs-utils');      
-const weexConfig = require('./libs/weex.config');
+//const weexConfig = require('./libs/weex.config');
 const builder = require('weex-builder');
 
 const defaultParams = {
@@ -46,6 +46,7 @@ const defaultParams = {
 
 let Previewer = {
   init: function(args) {
+    console.log(args);
     if(args['_'] && args['_'].length>0) {
       let entry = args['_'][0];
       args.entry = entry;
@@ -91,6 +92,9 @@ let Previewer = {
         return;  
       };
       this.serverMark = true;                          
+    }else{
+      this.buildJSFile(); 
+      return;
     }
 
     try{        
@@ -105,13 +109,44 @@ let Previewer = {
         //fs.lstatSync my raise when outputPath is file but not exist yet.
     }
     let self = this;
-    builder.build(entry,this.params.temDir,{
+    if(this.fileType == 'vue') {
+      fsUtils.replace(path.join(this.params.temDir,'app.js'),[
+        {
+          rule: "{{$module}}",
+          scripts: path.join(process.cwd(),this.params.entry) ,
+        }
+      ]).then(() => {
+        self.params.source = self.params.entry;
+        self.module = 'app';
+        self.params.entry = path.join(this.params.temDir,'app.js');
+        self.buildJSFile();
+
+      })   
+    } else {
+      self.buildJSFile(); 
+    }
+    
+
+    
+  },
+  
+  // build temp directory for web preview
+  initTemDir() {
+    if(!fs.existsSync(this.params.temDir) || !fs.existsSync(path.join(this.params.temDir,'index.html')) || !fs.existsSync(path.join(this.params.temDir,'weex.html'))) {
+      npmlog.error('Some bad enviroment.Please run "npm install weex-previewer --save"');
+      return false; 
+    }
+    fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
+    fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
+    return true;
+  },
+  
+  buildJSFile() {
+    builder.build(this.params.entry,this.params.temDir,{
       web: true,
     }).then((arr) => {
       if(arr.length > 0) {
         if (self.serverMark == true) {  // typeof jsBundlePathForRender == "string"
-
-            //no js bundle output specified, start server for playgroundApp(now) or H5 renderer.
           self.startWebServer();
           self.startWebSocket();
           return;
@@ -123,170 +158,7 @@ let Previewer = {
       }
     }).catch((err) => {
       npmlog.error(err); 
-    });
-    
-    return;
-    if (this.params.watch){
-      npmlog.info(`watching ${entry}`);
-      let self = this;
-      
-      //
-      watch(entry, function (fileName){
-          if (/\.(we|vue)$/gi.test(fileName)){
-              npmlog.info(`${fileName} updated`)
-              try{                    
-                  if (fs.lstatSync(outputPath).isDirectory()){
-                      let fn = path.basename(fileName).replace(/\..+/, '')            
-                      output = path.join(outputPath , `${fn}.js`)
-                  }
-              }catch(e){}
-              self.transforme(fileName,output);
-          }
-      })
-    }else{
-      this.transforme(entry,this.params.output);
-    }
-  },
-  
-  // build temp directory for web preview
-  initTemDir() {
-    if(!fs.existsSync(this.params.temDir) || !fs.existsSync(path.join(this.params.temDir,'index.html')) || !fs.existsSync(path.join(this.params.temDir,'weex.html'))) {
-      npmlog.error('Some bad enviroment.Please run "npm install weex-previewer --save"');
-      return false; 
-    }
-    fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
-    return true;
-  },
-  
-  
-  transforme(inputPath,outputPath){
-    let transformP;
-    let self = this;        
-    if (fs.lstatSync(inputPath).isFile()){
-      if(this.fileType == 'vue') {
-        transformP = fsUtils.replace(path.join(`${self.params.temDir}/`,'app.js'),[
-          {
-            rule: "{{$module}}",
-            scripts: path.join(process.cwd(),inputPath) ,
-          }
-        ]).then(() => {
-          let trans = self.transformTarget(inputPath , outputPath);
-          return trans;
-        })   
-      } else {
-        transformP  = self.transformTarget(inputPath , outputPath);  
-      }
-
-    }else if (fs.lstatSync(inputPath).isDirectory){
-        try{
-            fs.lstatSync(outputPath).isDirectory();
-        }catch(e){
-            npmlog.info(yargs.help())
-            npmlog.info("when input path is dir , output path must be dir too")
-            process.exit(1)    
-        }
-
-        let filesInTarget = fs.readdirSync(inputPath)
-        filesInTarget = _.filter(filesInTarget , (fileName)=>(fileName.length > 2 ) )        
-        filesInTarget = _.filter(filesInTarget , (fileName)=>( fileName.substring(fileName.length - 2 ,  fileName.length) ==  'we' ))
-        let filesInTargetPromiseList  = _.map(filesInTarget , function(fileName){
-            let ip = path.join( inputPath , fileName)
-            fileName = fileName.replace(/\.(we|vue)/, '')                            
-            let op = path.join( outputPath , `${fileName}.js`  )
-            return self.transformTarget(ip , op)
-        })
-        transformP = Promise.all(filesInTargetPromiseList)
-    }
-
-    transformP.then( function(jsBundlePathForRender){
-      
-      console.log(process.cwd());
-      if (self.serverMark == true) {  // typeof jsBundlePathForRender == "string"
-
-          //no js bundle output specified, start server for playgroundApp(now) or H5 renderer.
-        self.startWebServer(jsBundlePathForRender);
-        self.startWebSocket();
-
-      }else{
-          npmlog.info('weex JS bundle saved at ' + path.resolve(outputPath));          
-      }
-      
-    }).catch(function(e){
-        npmlog.error(e)
-    });      
-  },
-  
-  transformTarget(inputPath , outputPath){
-    let promiseData = {promise: null,resolver: null,rejecter: null}
-    promiseData.promise = new Promise(function (resolve, reject) {
-        promiseData.resolver = resolve
-        promiseData.rejecter = reject
-    })    
-    let webpackConfig = this.setWebpackConfig(inputPath,outputPath);
-    let filename = path.basename(inputPath).replace(/\..+/, '');
-    //return promiseData.promise;
-     
-    webpack(webpackConfig,function(err,stats){
-        setTimeout(()=> {           
-          displayUtils.displayWebpackStats(stats);
-        }, 300);         
-        if (err){
-          promiseData.rejecter(err)
-          if (err.name == "ModuleNotFoundError"){
-              let moduleName = "THE_MISSING_MODULE_NAME"
-              if ((err.dependencies.length > 0 )  && err.dependencies[0].request)   {
-                  moduleName = err.dependencies[0].request
-                  if (moduleName.indexOf("/") > 0){
-                      moduleName = moduleName.split("/")[0]
-                  }
-              }
-              setTimeout(()=> {
-                npmlog.info(`Please try to enter directory where your we file saved, and run command 'npm install ${moduleName}'`)
-              },100);
-          }else{
-            if (err.error){
-              setTimeout(() => {
-                  npmlog.error("critical syntax Error found , please check root tags or css syntax in your we file");
-              },100)
-            }
-          }
-
-        }else{
-          if (outputPath){
-            promiseData.resolver(false)            
-          }else{
-            promiseData.resolver(`${filename}.js`)            
-          }
-        }
-    })
-    return promiseData.promise;
-  },
-  
-  runWebpack() {
-    
-  },
-  
-  
-  setWebpackConfig(inputPath,outputPath) {
-    let module = this.module;
-    let bundleWritePath = null;
-    if (outputPath){
-        bundleWritePath = outputPath
-    }else{
-        bundleWritePath = path.join(`${this.params.temDir}/${module}.js`);
-    }
-    inputPath = path.resolve(inputPath);
-    let entryValue = '';
-    if(this.fileType == 'vue') {
-      entryValue = path.join(this.params.temDir,'app.js') + '?entry=true';  
-    }else {
-      entryValue = inputPath + '?entry=true';  
-    }
-    let webpackConfig = weexConfig(entryValue, bundleWritePath,'weex');
-    if(this.fileType == 'vue') {
-      webpackConfig = [webpackConfig,weexConfig(entryValue, bundleWritePath,'web')]  
-    }
-    return webpackConfig;
+    });  
   },
   
   startWebServer(fileName) {
@@ -424,7 +296,6 @@ let Previewer = {
   watchForWSRefresh(fileName){
     let self = this;
     fs.watch(this.params.entry, function(fileName){
-        
         if (!!fileName.match(`${self.params.temDir}`))  {
             return
         }
