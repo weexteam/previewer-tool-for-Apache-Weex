@@ -39,14 +39,11 @@ const defaultParams = {
   qr: false,
   smallqr: false,
   transformPath:'',
-  notopen: false,
+  open: true,
 };
-
-
 
 let Previewer = {
   init: function(args) {
-    console.log(args);
     if(args['_'] && args['_'].length>0) {
       let entry = args['_'][0];
       args.entry = entry;
@@ -93,10 +90,11 @@ let Previewer = {
       };
       this.serverMark = true;                          
     }else{
+      this.params.temDir = this.params.output;
       this.buildJSFile(); 
       return;
     }
-
+    
     try{        
       if (fs.lstatSync(entry).isFile()){
 
@@ -125,9 +123,7 @@ let Previewer = {
     } else {
       self.buildJSFile(); 
     }
-    
 
-    
   },
   
   // build temp directory for web preview
@@ -142,8 +138,10 @@ let Previewer = {
   },
   
   buildJSFile() {
+    let self = this;
     builder.build(this.params.entry,this.params.temDir,{
       web: true,
+      ext: /\.js$/.test(this.params.entry)?'js':this.params.fileType,
     }).then((arr) => {
       if(arr.length > 0) {
         if (self.serverMark == true) {  // typeof jsBundlePathForRender == "string"
@@ -152,7 +150,7 @@ let Previewer = {
           return;
 
         }else{
-          npmlog.info('weex JS bundle saved at ' + path.resolve(outputPath)); 
+          npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir)); 
           return;
         }  
       }
@@ -314,7 +312,7 @@ let Previewer = {
   },
   
   open(url) {
-    if (!this.params.notopen){
+    if (this.params.open){
       opener(url);
     }else{
       npmlog.info(`weex preview url:  ${url}`)

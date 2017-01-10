@@ -48,11 +48,10 @@ var defaultParams = (_defaultParams = {
   temDir: path.join(os.homedir(), '.weex_tmp'),
   port: '8081',
   host: '127.0.0.1'
-}, (0, _defineProperty3.default)(_defaultParams, 'output', 'no JSBundle output'), (0, _defineProperty3.default)(_defaultParams, 'wsport', '8082'), (0, _defineProperty3.default)(_defaultParams, 'qr', false), (0, _defineProperty3.default)(_defaultParams, 'smallqr', false), (0, _defineProperty3.default)(_defaultParams, 'transformPath', ''), (0, _defineProperty3.default)(_defaultParams, 'notopen', false), _defaultParams);
+}, (0, _defineProperty3.default)(_defaultParams, 'output', 'no JSBundle output'), (0, _defineProperty3.default)(_defaultParams, 'wsport', '8082'), (0, _defineProperty3.default)(_defaultParams, 'qr', false), (0, _defineProperty3.default)(_defaultParams, 'smallqr', false), (0, _defineProperty3.default)(_defaultParams, 'transformPath', ''), (0, _defineProperty3.default)(_defaultParams, 'open', true), _defaultParams);
 
 var Previewer = {
   init: function init(args) {
-    console.log(args);
     if (args['_'] && args['_'].length > 0) {
       var entry = args['_'][0];
       args.entry = entry;
@@ -100,6 +99,7 @@ var Previewer = {
       };
       this.serverMark = true;
     } else {
+      this.params.temDir = this.params.output;
       this.buildJSFile();
       return;
     }
@@ -143,8 +143,10 @@ var Previewer = {
     return true;
   },
   buildJSFile: function buildJSFile() {
+    var self = this;
     builder.build(this.params.entry, this.params.temDir, {
-      web: true
+      web: true,
+      ext: /\.js$/.test(this.params.entry) ? 'js' : this.params.fileType
     }).then(function (arr) {
       if (arr.length > 0) {
         if (self.serverMark == true) {
@@ -153,7 +155,7 @@ var Previewer = {
           self.startWebSocket();
           return;
         } else {
-          npmlog.info('weex JS bundle saved at ' + path.resolve(outputPath));
+          npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
           return;
         }
       }
@@ -293,7 +295,7 @@ var Previewer = {
     });
   },
   open: function open(url) {
-    if (!this.params.notopen) {
+    if (this.params.open) {
       opener(url);
     } else {
       npmlog.info('weex preview url:  ' + url);
