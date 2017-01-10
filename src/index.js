@@ -426,11 +426,12 @@ let Previewer = {
   
   watchForWSRefresh(fileName){
     let self = this;
-    watch(path.dirname(this.params.entry), function(fileName){
+    watch(this.params.entry, function(fileName){
         
         if (!!fileName.match(`${self.params.temDir}`))  {
             return
         }
+
         if (/\.(js|we|vue)$/gi.test(self.params.entry)){
             let transformP  = builder.build(self.params.entry,self.params.temDir,{
               web: true,
