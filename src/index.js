@@ -19,13 +19,11 @@ const opener = require('opener');
 const npmlog = require('npmlog');    
 const httpServer = require('http-server');
 const wsServer = require('ws').Server;
-const watch =  require('node-watch');
 const os = require('os');
 const _ = require("underscore");
 const chalk = require('chalk');
 const nwUtils =  require('./libs/nw-utils');      
-const fsUtils = require('./libs/fs-utils');
-const displayUtils = require('./libs/display-utils');         
+const fsUtils = require('./libs/fs-utils');      
 const weexConfig = require('./libs/weex.config');
 const builder = require('weex-builder');
 
@@ -60,7 +58,6 @@ let Previewer = {
     if(args.port <=0 || args.port >= 65336) {
       this.params.port = 8081;
     }
-    
     this.params = Object.assign({},defaultParams,args);
     
     this.file = path.basename(this.params.entry);
@@ -426,12 +423,11 @@ let Previewer = {
   
   watchForWSRefresh(fileName){
     let self = this;
-    watch(this.params.entry, function(fileName){
+    fs.watch(this.params.entry, function(fileName){
         
         if (!!fileName.match(`${self.params.temDir}`))  {
             return
         }
-
         if (/\.(js|we|vue)$/gi.test(self.params.entry)){
             let transformP  = builder.build(self.params.entry,self.params.temDir,{
               web: true,

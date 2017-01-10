@@ -9,7 +9,6 @@
   <meta name="apple-touch-fullscreen" content="yes">
   <meta name="format-detection" content="telephone=no, email=no">
   <link rel="stylesheet" href="./assets/style.css">
-  <script srccc="./config.js"></script>
   <script src="./assets/qrcode.js"></script>
   <script src="./assets/vue.js"></script>
 </head>
@@ -40,10 +39,10 @@
       var match = searchStr.match(reg)
       return match && match[1]
     }
-    let module = getUrlParam('page') || 'app.js';
+    var module = getUrlParam('page') || 'app.js';
     var protocol = location.protocol + '//'
-    var hostname = typeof CURRENT_IP === 'string' ? CURRENT_IP : location.hostname;
-    let wsport = getUrlParam('wsport') || '8082';
+    var hostname = location.hostname;
+    var wsport = getUrlParam('wsport') || '8082';
     var port = location.port ? ':' + location.port : '';
     var url = protocol + hostname + port + location.pathname.replace(/\/index\.html$/, '/').replace(/\/$/,'/' + module);
     new Vue({
@@ -59,8 +58,10 @@
       }
     })
     //for hot reload
-    (function startRefreshController() {
-	  if (location.protocol.match(/file/)) {
+    startSocketCheck();
+    
+    function startSocketCheck() {
+      if (location.protocol.match(/file/)) {
 	    return;
 	  }
 	  if (location.search.indexOf('hot-reload_controller') === -1) {
@@ -72,17 +73,23 @@
 	  }
 	  var host = location.hostname;
 	  var port = wsport;
-	  var client = new WebSocket('ws://' + host + ':' + port + '/', 'echo-protocol');
-	  client.onerror = function () {
-	    console.log('refresh controller websocket connection error');
-	  };
-	  client.onmessage = function (e) {
-	    console.log('Received: \'' + e.data + '\'');
-	    if (e.data === 'refresh') {
-	      location.reload();
-	    }
-	  };
-	})();
+      try {
+        var client = new WebSocket('ws://' + host + ':' + port + '/', 'echo-protocol');
+        client.onerror = function () {
+          console.log('refresh controller websocket connection error');
+        };
+        client.onmessage = function (e) {
+          console.log('Received: \'' + e.data + '\'');
+          if (e.data === 'refresh') {
+            location.reload();
+          }
+        };  
+      }catch(er) {
+        console.log(er);
+      }  
+      
+    };
+	      
   </script>
   
 </body>

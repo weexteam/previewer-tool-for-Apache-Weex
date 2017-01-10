@@ -2,8 +2,8 @@
  * Weex Toolkit Network utils
  */
 
-const os  = require('os')
-const _   = require("underscore")
+const os  = require('os');
+const _   = require("underscore");
 const localIP = require('quick-local-ip');
 
 export function getPublicIP(){
