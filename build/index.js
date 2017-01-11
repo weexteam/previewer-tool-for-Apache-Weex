@@ -50,7 +50,7 @@ var defaultParams = (_defaultParams = {
   host: '127.0.0.1'
 }, (0, _defineProperty3.default)(_defaultParams, 'output', 'no JSBundle output'), (0, _defineProperty3.default)(_defaultParams, 'wsport', '8082'), (0, _defineProperty3.default)(_defaultParams, 'qr', false), (0, _defineProperty3.default)(_defaultParams, 'smallqr', false), (0, _defineProperty3.default)(_defaultParams, 'transformPath', ''), (0, _defineProperty3.default)(_defaultParams, 'open', true), _defaultParams);
 
-var APP_TEMP_PATH = 'app.js';
+var APP_TEMP_PATH = 'app_temp.js';
 
 var Previewer = {
   init: function init(args) {
@@ -89,6 +89,8 @@ var Previewer = {
   },
 
   fileFlow: function fileFlow() {
+    var _this = this;
+
     var entry = this.params.entry;
     var output = this.params.ouput;
     if (this.params.output == 'no JSBundle output') {
@@ -104,22 +106,18 @@ var Previewer = {
     }
     var self = this;
     if (this.fileType == 'vue') {
-      fse.copySync(__dirname + '/../vue-template/template/app.js', APP_TEMP_PATH);
-      fsUtils.replace(path.join(APP_TEMP_PATH), [{
+      fsUtils.replace(this.params.temDir + '/app.js', [{
         rule: "{{$module}}",
         scripts: path.join(process.cwd(), this.params.entry)
       }]).then(function () {
-
-        self.module = 'app';
-        self.params.entry = APP_TEMP_PATH;
+        _this.module = 'app';
+        self.params.entry = _this.module + '.js';
         self.buildJSFile();
-        // fs.unlinkSync(APP_TEMP_PATH);
       });
     } else {
       self.buildJSFile();
     }
   },
-
 
   // build temp directory for web preview
   initTemDir: function initTemDir() {
@@ -128,7 +126,7 @@ var Previewer = {
       return false;
     }
     fse.copySync(__dirname + '/../vue-template/template/weex.html', this.params.temDir + '/weex.html');
-    //fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
+    fse.copySync(__dirname + '/../vue-template/template/app.js', this.params.temDir + '/app.js');
     return true;
   },
   buildJSFile: function buildJSFile() {

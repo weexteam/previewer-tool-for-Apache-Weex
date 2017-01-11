@@ -42,7 +42,7 @@ const defaultParams = {
   open: true,
 };
 
-const APP_TEMP_PATH = 'app.js';
+const APP_TEMP_PATH = 'app_temp.js';
 
 let Previewer = {
   init: function(args) {
@@ -97,25 +97,21 @@ let Previewer = {
     }
     let self = this;
     if(this.fileType == 'vue') {
-      fse.copySync(`${__dirname}/../vue-template/template/app.js` , APP_TEMP_PATH);
-      fsUtils.replace(path.join(APP_TEMP_PATH),[
+      fsUtils.replace(`${this.params.temDir}/app.js`,[
         {
           rule: "{{$module}}",
           scripts: path.join(process.cwd(),this.params.entry) ,
         }
       ]).then(() => {
-        
-        self.module = 'app';
-        self.params.entry = APP_TEMP_PATH;
+        this.module = 'app';
+        self.params.entry = this.module + '.js';
         self.buildJSFile();
-       // fs.unlinkSync(APP_TEMP_PATH);
       })   
     } else {
       self.buildJSFile(); 
     }
 
   },
-  
   // build temp directory for web preview
   initTemDir() {
     if(!fs.existsSync(this.params.temDir) || !fs.existsSync(path.join(this.params.temDir,'index.html')) || !fs.existsSync(path.join(this.params.temDir,'weex.html'))) {
@@ -123,7 +119,7 @@ let Previewer = {
       return false; 
     }
     fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
-    //fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
+    fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
     return true;
   },
   
@@ -243,13 +239,13 @@ let Previewer = {
       }    
       process.exit(1);
     }); 
-   process.on('SIGINT', function () {
-        console.log(chalk.green("weex  server stoped"));   
-        process.exit() 
+    process.on('SIGINT', function () {
+      console.log(chalk.green("weex  server stoped")); 
+      process.exit() 
     }) 
     process.on('SIGTERM', function () {
-        console.log(chalk.green("weex server stoped"));
-        process.exit() 
+      console.log(chalk.green("weex server stoped"));
+      process.exit() 
     });
   },
   
