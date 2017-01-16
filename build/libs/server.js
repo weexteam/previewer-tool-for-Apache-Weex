@@ -89,7 +89,7 @@ module.exports = {
     }
     return IP;
   },
-  startWebSocket: function startWebSocket(fileName) {
+  startWebSocket: function startWebSocket(source, entry, output) {
     var port = this.params.wsport;
     var wss = wsServer({ port: port });
     var self = this;
@@ -103,16 +103,15 @@ module.exports = {
     });
     self.watchForWSRefresh(fileName);
   },
-  watchForWSRefresh: function watchForWSRefresh(fileName) {
+
+  // watch file change and refresh browser
+  watchForWSRefresh: function watchForWSRefresh(source, entry, output) {
     var self = this;
-    fs.watch(this.params.source, function (fileName) {
-      if (!!fileName.match('' + self.params.temDir)) {
-        return;
-      }
-      if (/\.(js|we|vue)$/gi.test(self.params.entry)) {
-        var transformP = builder.build(self.params.entry, self.params.temDir, {
+    fs.watch(source, function () {
+      if (/\.(js|we|vue)$/gi.test(entry)) {
+        var transformP = builder.build(entry, output, {
           web: true,
-          ext: /\.js$/.test(self.params.entry) ? 'js' : self.fileType
+          ext: /\.js$/.test(entry) ? 'js' : 'vue'
         });
         transformP.then(function (arr) {
           console.log('file refresh!');

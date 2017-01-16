@@ -27,11 +27,13 @@ const fsUtils = require('./libs/fs-utils');
 //const weexConfig = require('./libs/weex.config');
 const builder = require('weex-builder');
 
+const WEEX_TMP_DIR = '.weex_tmp'
+
 const defaultParams = {
   entry: '',
   output: '',
   fileExt: ['vue','we'],
-  temDir: path.join(os.homedir(),'.weex_tmp'),
+  temDir: path.join(os.homedir(),WEEX_TMP_DIR),
   port: '8081',
   host: '127.0.0.1',
   output: 'no JSBundle output',
@@ -42,7 +44,6 @@ const defaultParams = {
   open: true,
 };
 
-const APP_TEMP_PATH = 'app_temp.js';
 
 let Previewer = {
   init: function(args) {
@@ -104,22 +105,26 @@ let Previewer = {
         }
       ]).then(() => {
         this.module = 'app';
-        self.params.entry = this.module + '.js';
+        self.params.entry = this.params.temDir + '/app.js';
         self.buildJSFile();
       })   
     } else {
       self.buildJSFile(); 
     }
-
   },
+  
+  
   // build temp directory for web preview
   initTemDir() {
     if(!fs.existsSync(this.params.temDir) || !fs.existsSync(path.join(this.params.temDir,'index.html')) || !fs.existsSync(path.join(this.params.temDir,'weex.html'))) {
-      npmlog.error('Some bad enviroment.Please run "npm install weex-previewer --save"');
-      return false; 
+      this.params.temDir = WEEX_TMP_DIR;
+      fse.mkdirsSync(WEEX_TMP_DIR);
+      fse.copySync(`${__dirname}/../vue-template/template/`,WEEX_TMP_DIR);
+      return true; 
+      
     }
-    fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
-    fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
+    fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.tmpDir}/weex.html`);
+    fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.tmpDir}/app.js`);
     return true;
   },
   
@@ -180,13 +185,9 @@ let Previewer = {
           npmlog.info(`target file in local path ${self.parmas.transformPath} will be transformer to JS bundle\nplease access http://${IP}:${port}/`);
           return;
       }
-      // qrcode has moved to the website
-      if (self.params.qr || self.params.smallqr){
-         // self.showQR();
-          return;
-      }
       
       let previewUrl = `http://${IP}:${port}/?hot-reload_controller&page=${self.module}.js&loader=xhr&wsport=${self.params.wsport}&type=${self.fileType}`;
+     
       let vueRegArr = [
         {
           rule: /{{\$script}}/,
@@ -233,30 +234,38 @@ let Previewer = {
     let self = this;
     process.on('uncaughtException', function(err) {
       if(err.errno === 'EADDRINUSE') {
+        
         npmlog.info('The server has been setted up.');
       }else {
         console.log(err);  
-      }    
+      }
+      self.removeWebFile();
       process.exit(1);
     }); 
     process.on('SIGINT', function () {
       console.log(chalk.green("weex  server stoped")); 
+      self.removeWebFile();
       process.exit() 
     }) 
     process.on('SIGTERM', function () {
       console.log(chalk.green("weex server stoped"));
+      self.removeWebFile();
       process.exit() 
     });
   },
   
-  getIP () {
-    let IP =   nwUtils.getPublicIP();
-    if (this.params.host != ''){
-        IP = this.params.host;
+  removeWebFile() {
+    if(this.params.temDir == WEEX_TMP_DIR) {
+      try {
+        fse.removeSync(this.params.temDir);  
+      }
+      catch(err) {
+        npmlog.error(err);
+      }
+      
     }
-    return IP;
   },
-  
+    
   startWebSocket(fileName){
     let port = this.params.wsport;
     let wss = wsServer({port: port})
@@ -292,6 +301,7 @@ let Previewer = {
         }
     });
   },
+  
   open(url) {
     if (this.params.open){
       opener(url);

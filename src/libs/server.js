@@ -106,7 +106,7 @@ module.exports = {
     return IP;
   },
   
-  startWebSocket(fileName){
+  startWebSocket(source,entry,output){
     let port = this.params.wsport;
     let wss = wsServer({port: port})
     let self = this
@@ -120,17 +120,14 @@ module.exports = {
     });
     self.watchForWSRefresh(fileName); 
   },
-  
-  watchForWSRefresh(fileName){
+  // watch file change and refresh browser
+  watchForWSRefresh(source,entry,output){
     let self = this;
-    fs.watch(this.params.source, function(fileName){
-        if (!!fileName.match(`${self.params.temDir}`))  {
-            return
-        }
-        if (/\.(js|we|vue)$/gi.test(self.params.entry)){
-            let transformP  = builder.build(self.params.entry,self.params.temDir,{
+    fs.watch(source,function(){
+        if (/\.(js|we|vue)$/gi.test(entry)){
+            let transformP  = builder.build(entry,output,{
               web: true,
-              ext: /\.js$/.test(self.params.entry)?'js':self.fileType,
+              ext: /\.js$/.test(entry)?'js':'vue',
             });
             transformP.then( function(arr){
               console.log('file refresh!');
@@ -140,6 +137,6 @@ module.exports = {
             });
         }
     });
-  },
+  }
   
 };
