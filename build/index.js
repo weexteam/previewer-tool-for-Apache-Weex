@@ -193,7 +193,7 @@ var Previewer = {
 
       var vueRegArr = [{
         rule: /{{\$script}}/,
-        scripts: '\n<script src="./assets/phantom-limb.js"></script>\n<script src="./assets/vue.runtime.js"></script>\n<script src="./assets/weex-vue-render/index.js"></script>\n      '
+        scripts: '\n<script src="./assets/vue.runtime.js"></script>\n<script src="./assets/weex-vue-render/index.js"></script>\n      '
       }, {
         rule: /{{\$script2}}/,
         scripts: '<script src="' + self.module + '.js"></script>'
@@ -221,7 +221,6 @@ var Previewer = {
     var self = this;
     process.on('uncaughtException', function (err) {
       if (err.errno === 'EADDRINUSE') {
-
         npmlog.info('The server has been setted up.');
       } else {
         console.log(err);
