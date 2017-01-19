@@ -4,11 +4,7 @@
 * 
 **/
 
-var _typeof2 = require('babel-runtime/helpers/typeof');
-
-var _typeof3 = _interopRequireDefault(_typeof2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var os = require('os');
 var path = require('path');
@@ -27,7 +23,7 @@ try {
   }
   fse.copySync('./vue-template/template', previewDir);
 } catch (err) {
-  if ((typeof err === 'undefined' ? 'undefined' : (0, _typeof3.default)(err)) == 'object') {
+  if ((typeof err === 'undefined' ? 'undefined' : _typeof(err)) == 'object') {
     if (err.code == 'EACCES') {
       console.error('Error:permission denied.Please apply the write premission to the directory: "' + home + '" ');
     }

@@ -1,16 +1,8 @@
 'use strict';
 
-var _assign = require('babel-runtime/core-js/object/assign');
-
-var _assign2 = _interopRequireDefault(_assign);
-
-var _defineProperty2 = require('babel-runtime/helpers/defineProperty');
-
-var _defineProperty3 = _interopRequireDefault(_defineProperty2);
-
 var _defaultParams;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /** weex-previewer
 * a tool help user to preview their weex files
@@ -50,7 +42,7 @@ var defaultParams = (_defaultParams = {
   temDir: path.join(os.homedir(), WEEX_TMP_DIR),
   port: '8081',
   host: '127.0.0.1'
-}, (0, _defineProperty3.default)(_defaultParams, 'output', 'no JSBundle output'), (0, _defineProperty3.default)(_defaultParams, 'wsport', '8082'), (0, _defineProperty3.default)(_defaultParams, 'qr', false), (0, _defineProperty3.default)(_defaultParams, 'smallqr', false), (0, _defineProperty3.default)(_defaultParams, 'transformPath', ''), (0, _defineProperty3.default)(_defaultParams, 'open', true), _defaultParams);
+}, _defineProperty(_defaultParams, 'output', 'no JSBundle output'), _defineProperty(_defaultParams, 'wsport', '8082'), _defineProperty(_defaultParams, 'qr', false), _defineProperty(_defaultParams, 'smallqr', false), _defineProperty(_defaultParams, 'transformPath', ''), _defineProperty(_defaultParams, 'open', true), _defaultParams);
 
 var Previewer = {
   init: function init(args) {
@@ -65,7 +57,7 @@ var Previewer = {
     if (args.port <= 0 || args.port >= 65336) {
       this.params.port = 8081;
     }
-    this.params = (0, _assign2.default)({}, defaultParams, args);
+    this.params = Object.assign({}, defaultParams, args);
     this.params.source = this.params.entry;
     this.file = path.basename(this.params.entry);
     this.module = this.file.replace(/\..+/, '');
@@ -122,14 +114,14 @@ var Previewer = {
 
   // build temp directory for web preview
   initTemDir: function initTemDir() {
-    if (!fs.existsSync(this.params.temDir) || !fs.existsSync(path.join(this.params.temDir, 'index.html')) || !fs.existsSync(path.join(this.params.temDir, 'weex.html'))) {
+    if (!fs.existsSync(this.params.temDir)) {
       this.params.temDir = WEEX_TMP_DIR;
       fse.mkdirsSync(WEEX_TMP_DIR);
       fse.copySync(__dirname + '/../vue-template/template/', WEEX_TMP_DIR);
       return true;
     }
-    fse.copySync(__dirname + '/../vue-template/template/weex.html', this.params.tmpDir + '/weex.html');
-    fse.copySync(__dirname + '/../vue-template/template/app.js', this.params.tmpDir + '/app.js');
+    fse.copySync(__dirname + '/../vue-template/template/weex.html', this.params.temDir + '/weex.html');
+    fse.copySync(__dirname + '/../vue-template/template/app.js', this.params.temDir + '/app.js');
     return true;
   },
   buildJSFile: function buildJSFile() {
@@ -278,6 +270,7 @@ var Previewer = {
           self.wsConnection.send("refresh");
         }).catch(function (err) {
           console.log(err);
+          self.wsConnection.send("refresh");
         });
       }
     });

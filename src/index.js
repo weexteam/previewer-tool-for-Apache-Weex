@@ -113,19 +113,18 @@ let Previewer = {
     }
   },
   
-  
   // build temp directory for web preview
   initTemDir() {
-    if(!fs.existsSync(this.params.temDir) || !fs.existsSync(path.join(this.params.temDir,'index.html')) || !fs.existsSync(path.join(this.params.temDir,'weex.html'))) {
+    if(!fs.existsSync(this.params.temDir)) {
       this.params.temDir = WEEX_TMP_DIR;
       fse.mkdirsSync(WEEX_TMP_DIR);
       fse.copySync(`${__dirname}/../vue-template/template/`,WEEX_TMP_DIR);
       return true; 
-      
     }
-    fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.tmpDir}/weex.html`);
-    fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.tmpDir}/app.js`);
+    fse.copySync(`${__dirname}/../vue-template/template/weex.html` , `${this.params.temDir}/weex.html`);
+    fse.copySync(`${__dirname}/../vue-template/template/app.js` , `${this.params.temDir}/app.js`);
     return true;
+    
   },
   
   buildJSFile() {
@@ -295,6 +294,7 @@ let Previewer = {
               self.wsConnection.send("refresh");                    
             }).catch((err) => {
               console.log(err);
+              self.wsConnection.send("refresh"); 
             });
         }
     });
