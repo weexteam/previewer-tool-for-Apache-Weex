@@ -28,5 +28,5 @@ preview({
 | open | boolean     |    true | auto open browser |
 | host | string   | 30.30.31.29 | specify an host for mobile device to preview |
 | port | string   | 8801 | specify an port for local web server |
-| websocketPort | string   | 8804 | specify an websocket port for hot reload |
+| wsport | string   | 8804 | specify an websocket port for hot reload |
 | output | string   | dist | specify an directory for bundle files |
