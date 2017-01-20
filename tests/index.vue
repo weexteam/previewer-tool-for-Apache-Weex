@@ -1,0 +1,27 @@
+<template>
+  <div class="wrapper" @click="update">
+    <image :src="logoUrl" class="logo"></image>
+    <text class="title">Hello {{target}}</text>
+  </div>
+</template>
+
+<style>
+  .wrapper { align-items: center; margin-top: 120px; }
+  .title { font-size: 48px; }
+  .logo { width: 360px; height: 82px; }
+</style>
+
+<script>
+  export default {
+    data: {
+      logoUrl: 'https://img.alicdn.com/tps/TB1SwrHPXXXXXabXVXXXXXXXXXX-720-343.png',
+      target: 'World' + parseInt(Math.random() * 1000)
+    },
+    methods: {
+      update: function (e) {
+        this.target = 'Weex'
+        console.log('target:', this.target)
+      }
+    }
+  }
+</script>

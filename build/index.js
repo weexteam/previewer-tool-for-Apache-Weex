@@ -101,7 +101,7 @@ var Previewer = {
       fsUtils.replace(this.params.temDir + '/app.js', [{
         rule: "{{$module}}",
         scripts: path.join(process.cwd(), this.params.entry)
-      }]).then(function () {
+      }], true).then(function () {
         _this.module = 'app';
         self.params.entry = _this.params.temDir + '/app.js';
         self.buildJSFile();

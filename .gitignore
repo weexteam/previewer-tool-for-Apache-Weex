@@ -20,7 +20,7 @@ DerivedData
 *.ipa
 *.xcuserstate
 project.xcworkspace
-
+tests/dist
 # Android/IJ
 #
 *.iml

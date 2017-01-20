@@ -44,7 +44,6 @@ const defaultParams = {
   open: true,
 };
 
-
 let Previewer = {
   init: function(args) {
     if(args['_'] && args['_'].length>0) {
@@ -103,7 +102,7 @@ let Previewer = {
           rule: "{{$module}}",
           scripts: path.join(process.cwd(),this.params.entry) ,
         }
-      ]).then(() => {
+      ],true).then(() => {
         this.module = 'app';
         self.params.entry = this.params.temDir + '/app.js';
         self.buildJSFile();
