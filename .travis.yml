@@ -1,7 +1,6 @@
 language: node_js
 node_js:
   - 6
-  - 5
   - 7
 script: ./node_modules/mocha/bin/mocha tests/*.test.js
 before_install:
