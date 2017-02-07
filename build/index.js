@@ -249,7 +249,7 @@ var Previewer = {
       ws.on('message', function incoming(message) {
         npmlog.info('received: %s', message);
       });
-      ws.send("ws server ok");
+      ws.send("ws server ok", function (errmsg) {});
       self.wsConnection = ws;
     });
     self.watchForWSRefresh(fileName);
@@ -267,10 +267,10 @@ var Previewer = {
         });
         transformP.then(function (arr) {
           console.log('file refresh!');
-          self.wsConnection.send("refresh");
+          self.wsConnection.send("refresh", function (errmsg) {});
         }).catch(function (err) {
           console.log(err);
-          self.wsConnection.send("refresh");
+          self.wsConnection.send("refresh", function (errmsg) {});
         });
       }
     });
