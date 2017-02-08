@@ -3,8 +3,8 @@
 * version 0.9.1
 * example : preview(args);
 * args Object
-* entry: input file 
-* output: output file 
+* entry: input file
+* output: output file
 * port: speccify the web server port (0-65336)
 * host: speccify the web server host
 * qr: show qrcode in  command line tool
@@ -16,15 +16,12 @@ const fs = require('fs');
 const fse = require('fs-extra');
 const path = require('path');
 const opener = require('opener');
-const npmlog = require('npmlog');    
+const npmlog = require('npmlog');
 const httpServer = require('http-server');
 const wsServer = require('ws').Server;
 const os = require('os');
-const _ = require("underscore");
 const chalk = require('chalk');
-const nwUtils =  require('./libs/nw-utils');      
-const fsUtils = require('./libs/fs-utils');      
-//const weexConfig = require('./libs/weex.config');
+const helper = require('./libs/helper');
 const builder = require('weex-builder');
 
 const WEEX_TMP_DIR = '.weex_tmp'
@@ -174,9 +171,8 @@ let Previewer = {
     //npmlog.info(`http port: ${port}`)        
     server.listen(port, "0.0.0.0", function () {
       npmlog.info((new Date()) + `http  is listening on port ${port}`)
-      let IP =  nwUtils.getLocalIP();
+      let IP =  helper.getLocalIP();
       if (self.transformServerPath){
-          IP =  nwUtils.getLocalIP();
           if (self.params.host != DEFAULT_HOST){
               IP = self.params.host;
           }
