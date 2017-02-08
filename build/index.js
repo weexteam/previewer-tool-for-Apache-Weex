@@ -52,8 +52,11 @@ var Previewer = {
     this.params = Object.assign({}, defaultParams, args);
     this.params.source = this.params.entry;
     this.file = path.basename(this.params.entry);
-    this.module = this.file.replace(/\..+/, '');
     this.fileType = helper.getFileType(this.file);
+    this.module = this.file.replace(/\..+/, '');
+    if (this.fileType === 'vue') {
+      this.module = 'app';
+    }
     this.fileDir = process.cwd();
     return this.fileFlow();
   },
@@ -61,19 +64,9 @@ var Previewer = {
     var _this = this;
 
     this.initTemDir();
-    var self = this;
-    if (this.fileType === 'vue') {
-      helper.replace(this.params.temDir + '/app.js', [{
-        rule: '{{$module}}',
-        scripts: path.join(process.cwd(), this.params.entry)
-      }], true).then(function () {
-        _this.module = 'app';
-        self.params.entry = _this.params.temDir + '/app.js';
-        self.buildJSFile();
-      });
-    } else {
-      self.buildJSFile();
-    }
+    this.buildJSFile(function () {
+      _this.startServer();
+    });
   },
 
   // build temp directory for web preview
@@ -102,15 +95,22 @@ var Previewer = {
     if (this.fileType === 'we') {
       regarr = weRegArr;
     }
-    helper.replace(path.join(this.params.temDir + '/', 'weex.html'), regarr).then(function () {}).catch(function (err) {
-      npmlog.info('replace file failed!');
-      npmlog.error(err);
-    });
-    fse.copySync(__dirname + '/../vue-template/template/app.js', this.params.temDir + '/app.js');
+    helper.replace(path.join(this.params.temDir + '/', 'weex.html'), regarr);
   },
-  buildJSFile: function buildJSFile() {
+
+  // only for vue preview on web
+  createVueAppEntry: function createVueAppEntry() {
+    fse.copySync(__dirname + '/../vue-template/template/app.js', this.params.temDir + '/app.js');
+    helper.replace(this.params.temDir + '/app.js', [{
+      rule: '{{$module}}',
+      scripts: path.join(process.cwd(), this.params.source)
+    }], true);
+    this.params.entry = this.params.temDir + '/app.js';
+  },
+  buildJSFile: function buildJSFile(callback) {
     var self = this;
     if (this.fileType === 'vue') {
+      this.createVueAppEntry();
       builder.build(this.params.source, path.join(this.params.temDir, this.module + '.weex.js'), {
         web: false,
         ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
@@ -122,37 +122,30 @@ var Previewer = {
         npmlog.error(err);
       });
     }
-    builder.build(this.params.entry, this.params.temDir, {
+    builder.build(self.params.entry, self.params.temDir, {
       web: true,
-      ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
+      ext: /\.js$/.test(self.params.entry) ? 'js' : this.fileType
     }).then(function (arr) {
       if (arr.length > 0) {
-        self.startServer();
+        callback();
       }
     }).catch(function (err) {
       npmlog.error(err);
     });
   },
   startServer: function startServer() {
-    this.ws = null;
+    var self = this;
     server.run({
       dir: this.params.temDir,
+      module: this.module,
+      fileType: this.fileType,
       port: this.params.port,
       wsport: this.params.wsport,
-      wsConnection: this.ws,
       wsSuccessCallback: function wsSuccessCallback() {
-        var _this2 = this;
-
-        fs.watch(this.params.source, function () {
-          var transformP = builder.build(_this2.params.entry, _this2.params.temDir, {
-            web: true,
-            ext: /\.js$/.test(_this2.params.entry) ? 'js' : 'vue'
-          });
-          transformP.then(function () {
-            npmlog.info('file refresh!');
-            server.sendSocketMessage('refresh');
-          }).catch(function (err) {
-            npmlog.error(err);
+        fs.watch(self.params.source, function () {
+          npmlog.info('file refresh');
+          self.buildJSFile(function () {
+            server.sendSocketMessage();
           });
         });
       }

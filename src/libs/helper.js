@@ -14,22 +14,18 @@ module.exports = {
   * @param regarr regular expression array
   **/
   replace: function (filePath, regarr, escape) {
-    return new Promise((resolve) => {
-      const content = fs.readFileSync(filePath, {
-        encoding: 'utf-8'
-      });
-      return resolve(content);
-    }).then((content) => {
-      regarr.forEach((regObj) => {
-        content = content.replace(regObj.rule, () => {
-          if (!escape) {
-            return regObj.scripts;
-          }
-          return regObj.scripts.replace(/\\/g, '\\\\');
-        });
-      });
-      return fs.writeFileSync(filePath, content);
+    let content = fs.readFileSync(filePath, {
+      encoding: 'utf-8'
     });
+    regarr.forEach((regObj) => {
+      content = content.replace(regObj.rule, () => {
+        if (!escape) {
+          return regObj.scripts;
+        }
+        return regObj.scripts.replace(/\\/g, '\\\\');
+      });
+    });
+    return fs.writeFileSync(filePath, content);
   }
 };
 

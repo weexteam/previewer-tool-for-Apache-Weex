@@ -10,43 +10,41 @@ var WebSocket = require('ws');
 var wsServer = WebSocket.Server;
 
 module.exports = {
-  runWeb: function runWeb() {
+  run: function run(args) {
     var _this = this;
 
-    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
+    var params = args;
     var options = {
-      root: args.dir,
+      root: params.dir,
       cache: '-1',
       showDir: true,
       autoIndex: true
     };
-    this.rootDir = args.dir;
-    if (!this.checkPort(args.port)) {
+    this.rootDir = params.dir;
+    if (!this.checkPort(params.port)) {
       return npmlog.info('HTTP port is illegal and please try another');
     }
     this.bindProcessEvent();
     var server = httpServer.createServer(options);
-    server.listen(args.port, '0.0.0.0', function () {
-      npmlog.info(new Date() + ('http  is listening on port ' + args.port));
+    server.listen(params.port, '0.0.0.0', function () {
+      npmlog.info(new Date() + ('http  is listening on port ' + params.port));
       var IP = _this.getLocalIP();
-      var previewUrl = 'http://' + IP + ':' + args.port + '/?hot-reload_controller&page=' + args.module + '.js&loader=xhr&wsport=' + args.wsport;
+      var previewUrl = 'http://' + IP + ':' + params.port + '/?hot-reload_controller&page=' + params.module + '.js&loader=xhr&wsport=' + params.wsport + '&type=' + params.fileType;
       opener(previewUrl);
       npmlog.info(previewUrl);
     });
-    this.startWebSocket(args.wsport, args.wsSuccessCallback);
+    this.startWebSocket(params.wsport, params.wsSuccessCallback);
     return server;
   },
   startWebSocket: function startWebSocket(wsport, wsSuccessCallback) {
+    var _this2 = this;
+
     if (!this.checkPort(wsport)) {
       return npmlog.info('websocket port is illegal and please try another');
     }
     var wss = wsServer({
       port: wsport
     });
-    var self = this;
     npmlog.info(new Date() + ('WebSocket  is listening on port ' + wsport));
     wss.on('connection', function (ws) {
       ws.on('message', function (message) {
@@ -54,17 +52,19 @@ module.exports = {
         wss.clients.forEach(function (client) {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
             client.send('ws server ok');
-            self.wsConnection = ws;
           }
         });
       });
-      wsSuccessCallback();
+      _this2.wsConnection = ws;
     });
+    wsSuccessCallback();
+    this.wss = wss;
     return wss;
   },
 
   // send web socket messsage to client
   sendSocketMessage: function sendSocketMessage(message) {
+    console.log(this.wss.clients.length);
     this.wsConnection.send(message || 'refresh');
   },
   bindProcessEvent: function bindProcessEvent() {
@@ -103,6 +103,6 @@ module.exports = {
   },
   checkPort: function checkPort(port) {
     port = parseInt(port, 10);
-    return !!(port <= 0 || port > 65336 || port === 80 || port === 23);
+    return !!(port >= 0 && port < 65336 && port !== 80 && port !== 23);
   }
 };

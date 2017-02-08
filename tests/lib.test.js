@@ -1,9 +1,8 @@
-var fsu = require('../src/libs/fs-utils');
+var helper = require('../src/libs/helper');
 var pathTo = require('path');
 var fse = require('fs-extra');
 var fs = require('fs');
 var expect = require('expect.js');
-
 
 describe('third lib test', function () {
   describe('replace', function () {
@@ -13,17 +12,14 @@ describe('third lib test', function () {
         content = '';
       fse.copySync(source, destPath);
       expect(fs.existsSync(destPath)).to.be(true);
-      fsu.replace(destPath, [{
-        rule: "{{$module}}",
+      helper.replace(destPath, [{
+        rule: '{{$module}}',
         scripts: 'WEEX_REPLACE'
-      }]).then(function() {
-        content = fs.readFileSync(destPath, {
-          encoding: 'utf-8'
-        });
-        expect(content.search('WEEX_REPLACE') >= 0).to.be(true);  
+      }]);
+      content = fs.readFileSync(destPath, {
+        encoding: 'utf-8'
       });
-    }); 
-    
+      expect(content.search('WEEX_REPLACE') >= 0).to.be(true);
+    });
   });
-  
 });

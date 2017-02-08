@@ -8,6 +8,9 @@
     "build": "gulp",
     "postinstall": "node ./src/hook/post-install.js"
   },
+  "bin": {
+    "weex-previewer": "./bin/weex-previewer"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/weexteam/weex-previewer.git"

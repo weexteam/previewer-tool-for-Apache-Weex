@@ -50,28 +50,19 @@ const Previewer = {
     this.params = Object.assign({}, defaultParams, args);
     this.params.source = this.params.entry;
     this.file = path.basename(this.params.entry);
-    this.module = this.file.replace(/\..+/, '');
     this.fileType = helper.getFileType(this.file);
+    this.module = this.file.replace(/\..+/, '');
+    if (this.fileType === 'vue') {
+      this.module = 'app';
+    }
     this.fileDir = process.cwd();
     return this.fileFlow();
   },
   fileFlow() {
     this.initTemDir();
-    const self = this;
-    if (this.fileType === 'vue') {
-      helper.replace(`${this.params.temDir}/app.js`, [
-        {
-          rule: '{{$module}}',
-          scripts: path.join(process.cwd(), this.params.entry),
-        }
-      ], true).then(() => {
-        this.module = 'app';
-        self.params.entry = this.params.temDir + '/app.js';
-        self.buildJSFile();
-      });
-    } else {
-      self.buildJSFile();
-    }
+    this.buildJSFile(() => {
+      this.startServer();
+    });
   },
   // build temp directory for web preview
   initTemDir() {
@@ -112,16 +103,23 @@ const Previewer = {
     if (this.fileType === 'we') {
       regarr = weRegArr;
     }
-    helper.replace(path.join(`${this.params.temDir}/`, 'weex.html'), regarr).then(() => {
-    }).catch((err) => {
-      npmlog.info('replace file failed!');
-      npmlog.error(err);
-    });
-    fse.copySync(`${__dirname}/../vue-template/template/app.js`, `${this.params.temDir}/app.js`);
+    helper.replace(path.join(`${this.params.temDir}/`, 'weex.html'), regarr);
   },
-  buildJSFile() {
+  // only for vue preview on web
+  createVueAppEntry() {
+    fse.copySync(`${__dirname}/../vue-template/template/app.js`, `${this.params.temDir}/app.js`);
+    helper.replace(`${this.params.temDir}/app.js`, [
+      {
+        rule: '{{$module}}',
+        scripts: path.join(process.cwd(), this.params.source),
+      }
+    ], true);
+    this.params.entry = this.params.temDir + '/app.js';
+  },
+  buildJSFile(callback) {
     const self = this;
     if (this.fileType === 'vue') {
+      this.createVueAppEntry();
       builder.build(this.params.source, path.join(this.params.temDir, this.module + '.weex.js'), {
         web: false,
         ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType,
@@ -133,35 +131,30 @@ const Previewer = {
         npmlog.error(err);
       });
     }
-    builder.build(this.params.entry, this.params.temDir, {
+    builder.build(self.params.entry, self.params.temDir, {
       web: true,
-      ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType,
+      ext: /\.js$/.test(self.params.entry) ? 'js' : this.fileType,
     }).then((arr) => {
       if (arr.length > 0) {
-        self.startServer();
+        callback();
       }
     }).catch((err) => {
       npmlog.error(err);
     });
   },
   startServer() {
-    this.ws = null;
+    const self = this;
     server.run({
       dir: this.params.temDir,
+      module: this.module,
+      fileType: this.fileType,
       port: this.params.port,
       wsport: this.params.wsport,
-      wsConnection: this.ws,
       wsSuccessCallback() {
-        fs.watch(this.params.source, () => {
-          const transformP = builder.build(this.params.entry, this.params.temDir, {
-            web: true,
-            ext: /\.js$/.test(this.params.entry) ? 'js' : 'vue',
-          });
-          transformP.then(() => {
-            npmlog.info('file refresh!');
-            server.sendSocketMessage('refresh');
-          }).catch((err) => {
-            npmlog.error(err);
+        fs.watch(self.params.source, () => {
+          npmlog.info('file refresh');
+          self.buildJSFile(() => {
+            server.sendSocketMessage();
           });
         });
       }
