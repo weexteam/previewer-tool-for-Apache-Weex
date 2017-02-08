@@ -1,6 +1,6 @@
 const fs = require('fs');
 const yargs = require('yargs');
-const preview = require('../src/index');
+const preview = require('../build/index');
 
 const userinfo = '\nUsage: weex <foo/bar/we_file_or_dir_path>  [options] \nUsage: weex init [projectName]';
 const argv = yargs

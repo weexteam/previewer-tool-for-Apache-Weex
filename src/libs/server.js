@@ -76,6 +76,7 @@ module.exports = {
       process.exit();
     });
   },
+  // remove cache file if in user project directory
   removeWebFile() {
     if (this.rootDir === '.weex_tmp') {
       try {

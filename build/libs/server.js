@@ -1,125 +1,108 @@
 'use strict';
 
-/**start a local server**/
-
 var npmlog = require('npmlog');
 var httpServer = require('http-server');
-var wsServer = require('ws').Server;
+var localIP = require('quick-local-ip');
+var fse = require('fs-extra');
+var opener = require('opener');
+var WebSocket = require('ws');
+
+var wsServer = WebSocket.Server;
 
 module.exports = {
-  startWebServer: function startWebServer(fileName) {
+  runWeb: function runWeb() {
+    var _this = this;
+
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
     var options = {
-      root: this.params.temDir,
-      cache: "-1",
+      root: args.dir,
+      cache: '-1',
       showDir: true,
       autoIndex: true
     };
-    var self = this;
-    self.bindProcessEvent();
+    this.rootDir = args.dir;
+    if (!this.checkPort(args.port)) {
+      return npmlog.info('HTTP port is illegal and please try another');
+    }
+    this.bindProcessEvent();
     var server = httpServer.createServer(options);
-    var port = this.params.port;
-    //npmlog.info(`http port: ${port}`)        
-    server.listen(port, "0.0.0.0", function () {
-      npmlog.info(new Date() + ('http  is listening on port ' + port));
-      var IP = nwUtils.getLocalIP();
-      if (self.transformServerPath) {
-        IP = nwUtils.getLocalIP();
-        if (self.params.host != DEFAULT_HOST) {
-          IP = self.params.host;
-        }
-        npmlog.info('target file in local path ' + self.parmas.transformPath + ' will be transformer to JS bundle\nplease access http://' + IP + ':' + port + '/');
-        return;
-      }
-      // qrcode has moved to the website
-      if (self.params.qr || self.params.smallqr) {
-        // self.showQR();
-        return;
-      }
-
-      var previewUrl = 'http://' + IP + ':' + port + '/?hot-reload_controller&page=' + self.module + '.js&loader=xhr&wsport=' + self.params.wsport + '&type=' + self.fileType;
-      var vueRegArr = [{
-        rule: /{{\$script}}/,
-        scripts: '\n<script src="./assets/phantom-limb.js"></script>\n<script src="./assets/vue.runtime.js"></script>\n<script src="./assets/weex-vue-render/index.js"></script>\n      '
-      }, {
-        rule: /{{\$script2}}/,
-        scripts: '<script src="' + self.module + '.js"></script>'
-      }];
-      var weRegArr = [{
-        rule: /{{\$script}}/,
-        scripts: '\n<script src="./assets/weex-html5/weex.js"></script>\n<script src="./assets/weex-init.js"></script>\n      '
-      }, {
-        rule: /{{\$script2}}/,
-        scripts: ''
-      }];
-      var regarr = vueRegArr;
-      if (/\.we$/.test(self.params.entry)) {
-        regarr = weRegArr;
-      }
-      fsUtils.replace(path.join(self.params.temDir + '/', 'weex.html'), regarr).then(function () {
-        self.open(previewUrl);
-      }).catch(function (err) {
-        console.log(err);
-        npmlog.error("replace file failed!");
-      });
+    server.listen(args.port, '0.0.0.0', function () {
+      npmlog.info(new Date() + ('http  is listening on port ' + args.port));
+      var IP = _this.getLocalIP();
+      var previewUrl = 'http://' + IP + ':' + args.port + '/?hot-reload_controller&page=' + args.module + '.js&loader=xhr&wsport=' + args.wsport;
+      opener(previewUrl);
+      npmlog.info(previewUrl);
     });
+    this.startWebSocket(args.wsport, args.wsSuccessCallback);
+    return server;
+  },
+  startWebSocket: function startWebSocket(wsport, wsSuccessCallback) {
+    if (!this.checkPort(wsport)) {
+      return npmlog.info('websocket port is illegal and please try another');
+    }
+    var wss = wsServer({
+      port: wsport
+    });
+    var self = this;
+    npmlog.info(new Date() + ('WebSocket  is listening on port ' + wsport));
+    wss.on('connection', function (ws) {
+      ws.on('message', function (message) {
+        npmlog.info('received: %s', message);
+        wss.clients.forEach(function (client) {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send('ws server ok');
+            self.wsConnection = ws;
+          }
+        });
+      });
+      wsSuccessCallback();
+    });
+    return wss;
+  },
+
+  // send web socket messsage to client
+  sendSocketMessage: function sendSocketMessage(message) {
+    this.wsConnection.send(message || 'refresh');
   },
   bindProcessEvent: function bindProcessEvent() {
-    var self = this;
     process.on('uncaughtException', function (err) {
       if (err.errno === 'EADDRINUSE') {
         npmlog.info('The server has been setted up.');
       } else {
-        console.log(err);
+        npmlog.error(err);
       }
       process.exit(1);
     });
     process.on('SIGINT', function () {
-      console.log(chalk.green("weex  server stoped"));
+      npmlog.info('weex  server stoped');
       process.exit();
     });
     process.on('SIGTERM', function () {
-      console.log(chalk.green("weex server stoped"));
+      npmlog.info('weex server stoped');
       process.exit();
     });
   },
-  getIP: function getIP() {
-    var IP = nwUtils.getPublicIP();
-    if (this.params.host != '') {
-      IP = this.params.host;
+
+  // remove cache file if in user project directory
+  removeWebFile: function removeWebFile() {
+    if (this.rootDir === '.weex_tmp') {
+      try {
+        fse.removeSync(this.rootDir);
+      } catch (err) {
+        npmlog.error(err);
+      }
     }
-    return IP;
-  },
-  startWebSocket: function startWebSocket(source, entry, output) {
-    var port = this.params.wsport;
-    var wss = wsServer({ port: port });
-    var self = this;
-    npmlog.info(new Date() + ('WebSocket  is listening on port ' + port));
-    wss.on('connection', function connection(ws) {
-      ws.on('message', function incoming(message) {
-        npmlog.info('received: %s', message);
-      });
-      ws.send("ws server ok");
-      self.wsConnection = ws;
-    });
-    self.watchForWSRefresh(fileName);
   },
 
-  // watch file change and refresh browser
-  watchForWSRefresh: function watchForWSRefresh(source, entry, output) {
-    var self = this;
-    fs.watch(source, function () {
-      if (/\.(js|we|vue)$/gi.test(entry)) {
-        var transformP = builder.build(entry, output, {
-          web: true,
-          ext: /\.js$/.test(entry) ? 'js' : 'vue'
-        });
-        transformP.then(function (arr) {
-          console.log('file refresh!');
-          self.wsConnection.send("refresh");
-        }).catch(function (err) {
-          console.log(err);
-        });
-      }
-    });
+  // get local network ip
+  getLocalIP: function getLocalIP() {
+    return localIP.getLocalIP4();
+  },
+  checkPort: function checkPort(port) {
+    port = parseInt(port, 10);
+    return !!(port <= 0 || port > 65336 || port === 80 || port === 23);
   }
 };
