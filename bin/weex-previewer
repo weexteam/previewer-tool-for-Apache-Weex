@@ -1,0 +1,34 @@
+const fs = require('fs');
+const yargs = require('yargs');
+const preview = require('../src/index');
+
+const userinfo = '\nUsage: weex <foo/bar/we_file_or_dir_path>  [options] \nUsage: weex init [projectName]';
+const argv = yargs
+  .usage(userinfo)
+  .option('port', {
+    demand: false
+  })
+  .default('port', 8081)
+  .describe('port', 'http listening port number ,default is 8081')
+  .option('wsport', {
+    demand: false
+  })
+  .default('wsport', 8082)
+  .describe('wsport', 'websocket listening port number ,default is 8082')
+  .epilog('Usage:weex <command>\n\nwhere <command> is one of:\n\n       debug               start weex debugger\n       compile             compile we/vue file\n       run                 run your project\n\nweex  <command> --help      help on <command>')
+  .argv;
+
+const inputPath = argv._[0];
+
+let badWePath = !!(!inputPath || (inputPath.length < 2));
+try {
+  fs.accessSync(inputPath, fs.F_OK);
+} catch (e) {
+  badWePath = true;
+}
+if (badWePath) {
+  yargs.showHelp();
+  process.exit(1);
+}
+
+preview(argv);

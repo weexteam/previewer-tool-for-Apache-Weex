@@ -1,7 +1,13 @@
 const fs = require('fs');
-const localIP = require('quick-local-ip');
 
 module.exports = {
+  // check entry file
+  checkEntry: function (filename) {
+    return /\.(we|vue)$/.test(filename);
+  },
+  getFileType: function (filename) {
+    return /\.vue$/.test(filename) ? 'vue' : 'we';
+  },
   /**
   *  use regular expression to replace some file contents
   * @param filePath
@@ -24,10 +30,6 @@ module.exports = {
       });
       return fs.writeFileSync(filePath, content);
     });
-  },
-  // get local network ip
-  getLocalIP: function () {
-    return localIP.getLocalIP4();
   }
 };
 
