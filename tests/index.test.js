@@ -4,6 +4,7 @@ var fse = require('fs-extra');
 var fs = require('fs');
 var os = require('os');
 var expect = require('expect.js');
+require('../build/hook/post-install');
 
 fse.removeSync('./tests/dist/*');
 describe('test .vue file build', function () {
