@@ -13,13 +13,14 @@ fse.removeSync('./tests/dist/*');
 describe('test main flow', function () {
   pre({
     entry: './tests/index.vue',
-    temDir: './tests/dist',
+ //   temDir: './tests/dist',
     open: false
   });
   this.timeout(10000);
   it('test .vue file build', function (done) {
+    console.log(fs.existsSync('./tests/dist/app.weex.js'));
     setTimeout(function () { 
-      expect(fs.existsSync('./tests/dist/app.weex.js')).to.equal(true);
+      expect(fs.existsSync(path.join(previewDir,'app.weex.js'))).to.equal(true);
       done();
     }, 6000);
     
