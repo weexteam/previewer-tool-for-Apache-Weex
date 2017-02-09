@@ -10,7 +10,7 @@ var expect = require('expect.js');
 fse.removeSync('./tests/dist/*');
 describe('test .vue file build', function () {
   pre({
-    entry: pathTo.resolve('./tests/index.vue'),
+    entry: './tests/index.vue',
     temDir: './tests/dist',
     open: false
   });
