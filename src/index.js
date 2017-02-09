@@ -150,6 +150,7 @@ const Previewer = {
       fileType: this.fileType,
       port: this.params.port,
       wsport: this.params.wsport,
+      open: this.params.open,
       wsSuccessCallback() {
         fs.watch(self.params.source, () => {
           npmlog.info('file refresh');

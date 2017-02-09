@@ -30,7 +30,9 @@ module.exports = {
       npmlog.info(new Date() + ('http  is listening on port ' + params.port));
       var IP = _this.getLocalIP();
       var previewUrl = 'http://' + IP + ':' + params.port + '/?hot-reload_controller&page=' + params.module + '.js&loader=xhr&wsport=' + params.wsport + '&type=' + params.fileType;
-      opener(previewUrl);
+      if (params.open) {
+        opener(previewUrl);
+      }
       npmlog.info(previewUrl);
     });
     this.startWebSocket(params.wsport, params.wsSuccessCallback);
@@ -64,7 +66,6 @@ module.exports = {
 
   // send web socket messsage to client
   sendSocketMessage: function sendSocketMessage(message) {
-    console.log(this.wss.clients.length);
     this.wsConnection.send(message || 'refresh');
   },
   bindProcessEvent: function bindProcessEvent() {

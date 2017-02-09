@@ -26,7 +26,9 @@ module.exports = {
       npmlog.info((new Date()) + `http  is listening on port ${params.port}`);
       const IP = this.getLocalIP();
       const previewUrl = `http://${IP}:${params.port}/?hot-reload_controller&page=${params.module}.js&loader=xhr&wsport=${params.wsport}&type=${params.fileType}`;
-      opener(previewUrl);
+      if (params.open) {
+        opener(previewUrl);
+      }
       npmlog.info(previewUrl);
     });
     this.startWebSocket(params.wsport, params.wsSuccessCallback);

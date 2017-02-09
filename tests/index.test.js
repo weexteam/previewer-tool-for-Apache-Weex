@@ -9,7 +9,8 @@ fse.removeSync('./tests/dist/*');
 describe('test .vue file build', function () {
   pre({
     entry: './tests/index.vue',
-    temDir: './tests/dist'
+    temDir: './tests/dist',
+    open: false
   });
   this.timeout(10000);
   it('test .we file build', function (done) {
