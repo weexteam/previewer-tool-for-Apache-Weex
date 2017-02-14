@@ -6,12 +6,9 @@
 * example : preview(args);
 * args Object
 * entry: input file
-* output: output file
+* folder: file directory
 * port: speccify the web server port (0-65336)
-* host: speccify the web server host
-* qr: show qrcode in  command line tool
-* smallqr: smaller qr code in command line tool
-* notopen: open brower auto
+* wsport: speccify the websocket server port (0-65336)
 **/
 
 var fs = require('fs');
@@ -42,6 +39,10 @@ var Previewer = {
     // old weex-previewer compatible
     if (args['_'] && args['_'].length > 0 && !args.entry) {
       args.entry = args['_'][0];
+    } else if (Array.isArray(args['_'])) {
+      if (fs.lstatSync(args['_'][0]).isDirectory()) {
+        args.folder = args['_'][0];
+      }
     }
     if (!helper.checkEntry(args.entry)) {
       return npmlog.error('Not a ".vue" or ".we" file');
@@ -109,23 +110,39 @@ var Previewer = {
   },
   buildJSFile: function buildJSFile(callback) {
     var self = this;
+    var buildOpt = {
+      web: true,
+      ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
+    };
+    var source = this.params.entry;
+    var dest = this.params.temDir;
+    var vueSource = this.params.source;
+    if (this.params.folder) {
+      source = this.params.folder;
+      vueSource = this.params.folder;
+      buildOpt.entry = this.params.entry;
+    }
     if (this.fileType === 'vue') {
       this.createVueAppEntry();
-      builder.build(this.params.source, path.join(this.params.temDir, this.module + '.weex.js'), {
-        web: false,
-        ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
-      }).then(function (arr) {
-        if (arr.length > 0) {
-          npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
-        }
-      }).catch(function (err) {
-        npmlog.error(err);
+      if (buildOpt.entry) {
+        buildOpt.entry = this.params.entry;
+      } else {
+        source = this.params.entry;
+      }
+      this.build(vueSource, path.join(this.params.temDir, this.module + '.weex.js'), buildOpt, function () {
+        npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
       });
+      this.build(buildOpt.entry, dest, {
+        web: true,
+        ext: 'js',
+        entry: buildOpt.entry
+      }, callback);
+    } else {
+      this.build(source, dest, buildOpt, callback);
     }
-    builder.build(self.params.entry, self.params.temDir, {
-      web: true,
-      ext: /\.js$/.test(self.params.entry) ? 'js' : this.fileType
-    }).then(function (arr) {
+  },
+  build: function build(src, dest, opts, callback) {
+    builder.build(src, dest, opts).then(function (arr) {
       if (arr.length > 0) {
         callback();
       }

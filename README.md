@@ -8,7 +8,7 @@ a tool help user to preview their weex files
 ### how to use
 
 ``` bash 
-npm install weex-previewer
+npm install weex-previewer --save
 ```
 
 ``` js
@@ -19,6 +19,17 @@ preview({
 });
 
 ```
+
+#### use command line 
+``` bash 
+npm install weex-previewer -g
+```
+
+``` bash
+weex-previewer src/index.vue
+```
+
+
 
 ### Options
 
