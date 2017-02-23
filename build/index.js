@@ -70,7 +70,7 @@ var Previewer = {
     });
   },
 
-  // build temp directory for web preview
+  // build temporary directory for web preview
   initTemDir: function initTemDir() {
     if (!fs.existsSync(this.params.temDir)) {
       this.params.temDir = WEEX_TMP_DIR;
@@ -99,7 +99,7 @@ var Previewer = {
     helper.replace(path.join(this.params.temDir + '/', 'weex.html'), regarr);
   },
 
-  // only for vue preview on web
+  // only for vue previewing on web
   createVueAppEntry: function createVueAppEntry() {
     fse.copySync(__dirname + '/../vue-template/template/app.js', this.params.temDir + '/app.js');
     helper.replace(this.params.temDir + '/app.js', [{
@@ -109,9 +109,12 @@ var Previewer = {
     this.params.entry = this.params.temDir + '/app.js';
   },
   buildJSFile: function buildJSFile(callback) {
+    var _this2 = this;
+
     var self = this;
     var buildOpt = {
       web: true,
+      watch: true,
       ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
     };
     var source = this.params.entry;
@@ -131,8 +134,16 @@ var Previewer = {
       }
       this.build(vueSource, path.join(this.params.temDir, this.module + '.weex.js'), buildOpt, function () {
         npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
+      }, function () {
+        _this2.createVueAppEntry();
+        _this2.build(_this2.params.entry, dest, {
+          web: true,
+          ext: 'js',
+          entry: buildOpt.entry
+        }, callback);
       });
-      this.build(buildOpt.entry, dest, {
+      // when you first build
+      this.build(this.params.entry, dest, {
         web: true,
         ext: 'js',
         entry: buildOpt.entry
@@ -141,13 +152,23 @@ var Previewer = {
       this.build(source, dest, buildOpt, callback);
     }
   },
-  build: function build(src, dest, opts, callback) {
-    builder.build(src, dest, opts).then(function (arr) {
-      if (arr.length > 0) {
-        callback();
+  build: function build(src, dest, opts, buildcallback, watchCallback) {
+    var _this3 = this;
+
+    builder.build(src, dest, opts, function (err, fileStream) {
+      if (!err) {
+        if (_this3.wsSuccess) {
+          if (typeof watchCallback !== 'undefined') {
+            watchCallback();
+          }
+          npmlog.info(fileStream);
+          server.sendSocketMessage();
+        } else {
+          buildcallback();
+        }
+      } else {
+        npmlog.error(err);
       }
-    }).catch(function (err) {
-      npmlog.error(err);
     });
   },
   startServer: function startServer() {
@@ -160,12 +181,7 @@ var Previewer = {
       wsport: this.params.wsport,
       open: this.params.open,
       wsSuccessCallback: function wsSuccessCallback() {
-        fs.watch(self.params.source, function () {
-          npmlog.info('file refresh');
-          self.buildJSFile(function () {
-            server.sendSocketMessage();
-          });
-        });
+        self.wsSuccess = true;
       }
     });
   }

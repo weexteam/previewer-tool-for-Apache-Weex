@@ -65,7 +65,7 @@ const Previewer = {
       this.startServer();
     });
   },
-  // build temp directory for web preview
+  // build temporary directory for web preview
   initTemDir() {
     if (!fs.existsSync(this.params.temDir)) {
       this.params.temDir = WEEX_TMP_DIR;
@@ -106,7 +106,7 @@ const Previewer = {
     }
     helper.replace(path.join(`${this.params.temDir}/`, 'weex.html'), regarr);
   },
-  // only for vue preview on web
+  // only for vue previewing on web
   createVueAppEntry() {
     fse.copySync(`${__dirname}/../vue-template/template/app.js`, `${this.params.temDir}/app.js`);
     helper.replace(`${this.params.temDir}/app.js`, [
@@ -121,6 +121,7 @@ const Previewer = {
     const self = this;
     const buildOpt = {
       web: true,
+      watch: true,
       ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
     };
     let source = this.params.entry;
@@ -140,8 +141,16 @@ const Previewer = {
       }
       this.build(vueSource, path.join(this.params.temDir, this.module + '.weex.js'), buildOpt, () => {
         npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
+      }, () => {
+        this.createVueAppEntry();
+        this.build(this.params.entry, dest, {
+          web: true,
+          ext: 'js',
+          entry: buildOpt.entry
+        }, callback);
       });
-      this.build(buildOpt.entry, dest, {
+      // when you first build
+      this.build(this.params.entry, dest, {
         web: true,
         ext: 'js',
         entry: buildOpt.entry
@@ -150,13 +159,21 @@ const Previewer = {
       this.build(source, dest, buildOpt, callback);
     }
   },
-  build(src, dest, opts, callback) {
-    builder.build(src, dest, opts).then((arr) => {
-      if (arr.length > 0) {
-        callback();
+  build(src, dest, opts, buildcallback, watchCallback) {
+    builder.build(src, dest, opts, (err, fileStream) => {
+      if (!err) {
+        if (this.wsSuccess) {
+          if (typeof watchCallback !== 'undefined') {
+            watchCallback();
+          }
+          npmlog.info(fileStream);
+          server.sendSocketMessage();
+        } else {
+          buildcallback();
+        }
+      } else {
+        npmlog.error(err);
       }
-    }).catch((err) => {
-      npmlog.error(err);
     });
   },
   startServer() {
@@ -169,12 +186,7 @@ const Previewer = {
       wsport: this.params.wsport,
       open: this.params.open,
       wsSuccessCallback() {
-        fs.watch(self.params.source, () => {
-          npmlog.info('file refresh');
-          self.buildJSFile(() => {
-            server.sendSocketMessage();
-          });
-        });
+        self.wsSuccess = true;
       }
     });
   }

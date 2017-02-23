@@ -8,6 +8,7 @@ var opener = require('opener');
 var WebSocket = require('ws');
 
 var wsServer = WebSocket.Server;
+var clients = [];
 
 module.exports = {
   run: function run(args) {
@@ -49,24 +50,63 @@ module.exports = {
     });
     npmlog.info(new Date() + ('WebSocket  is listening on port ' + wsport));
     wss.on('connection', function (ws) {
+      clients.push(ws);
       ws.on('message', function (message) {
         npmlog.info('received: %s', message);
-        wss.clients.forEach(function (client) {
-          if (client !== ws && client.readyState === WebSocket.OPEN) {
-            client.send('ws server ok');
+        clients.forEach(function (client) {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send('ws server ok', function (err) {
+              if (err) {
+                npmlog.error(err);
+              }
+            });
           }
         });
       });
-      _this2.wsConnection = ws;
+      // websocket close handle
+      ws.on('close', function () {
+        ws.close();
+        ws._socket.destroy();
+        clients.splice(_this2.findClient(ws.upgradeReq.url));
+      });
+      ws.on('error', function (error) {
+        if (error) {
+          npmlog.error(error);
+          ws.close();
+          ws._socket.destroy();
+          clients.splice(_this2.findClient(ws.upgradeReq.url), 1);
+        }
+      });
+      ws.on('close', function () {
+        ws.close();
+        ws._socket.destroy();
+        clients.splice(_this2.findClient(ws.upgradeReq.url), 1);
+      });
     });
     wsSuccessCallback();
     this.wss = wss;
     return wss;
   },
+  findClient: function findClient(url) {
+    for (var i = 0; i < clients.length; i++) {
+      if (clients[i].upgradeReq.url === url) {
+        return i;
+      }
+    }
+    return null;
+  },
 
   // send web socket messsage to client
   sendSocketMessage: function sendSocketMessage(message) {
-    this.wsConnection.send(message || 'refresh');
+    clients.forEach(function (client) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message || 'refresh', function (err) {
+          if (err) {
+            npmlog.error(err);
+          }
+        });
+      }
+    });
   },
   bindProcessEvent: function bindProcessEvent() {
     process.on('uncaughtException', function (err) {
