@@ -75,7 +75,6 @@ const Previewer = {
       {
         rule: /{{\$script}}/,
         scripts: `
-<script src="./assets/phantom-limb.js"></script>
 <script src="./assets/vue.runtime.js"></script>
 <script src="./assets/weex-vue-render/index.js"></script>
     `

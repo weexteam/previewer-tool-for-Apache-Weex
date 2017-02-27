@@ -6,14 +6,15 @@
     var match = searchStr.match(reg);
     return match && match[1];
   }
-  var page = getUrlParam('page') || '/dist/index.js';
-  if (!page) {
-    if (window.top) {
+  var page = '/dist/index.js';
+  if (getUrlParam('name')) {
+    page = getUrlParam('name');
+  } else {
+    if (window.top && getUrlParam('page', top.location.search)) {
       page = getUrlParam('page', top.location.search);
-    } else {
-      return console.warn('Page not loaded!!!');
     }
   }
+  
   if (window.weex && window.weex.init ) {
     window.weex.init({
       appId: location.href,

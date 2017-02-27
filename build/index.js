@@ -78,7 +78,7 @@ var Previewer = {
     fse.copySync(__dirname + '/../vue-template/template/weex.html', this.params.temDir + '/weex.html');
     var vueRegArr = [{
       rule: /{{\$script}}/,
-      scripts: '\n<script src="./assets/phantom-limb.js"></script>\n<script src="./assets/vue.runtime.js"></script>\n<script src="./assets/weex-vue-render/index.js"></script>\n    '
+      scripts: '\n<script src="./assets/vue.runtime.js"></script>\n<script src="./assets/weex-vue-render/index.js"></script>\n    '
     }];
     var weRegArr = [{
       rule: /{{\$script}}/,
