@@ -49,13 +49,10 @@ const Previewer = {
       this.params.port = 8081;
     }
     this.params = Object.assign({}, defaultParams, args);
-    this.params.source = this.params.entry;
+    this.params.source = this.params.folder || this.params.entry;
     this.file = path.basename(this.params.entry);
     this.fileType = helper.getFileType(this.file);
     this.module = this.file.replace(/\..+/, '');
-    if (this.fileType === 'vue') {
-      this.module = 'app';
-    }
     this.fileDir = process.cwd();
     return this.fileFlow();
   },
@@ -82,10 +79,6 @@ const Previewer = {
 <script src="./assets/vue.runtime.js"></script>
 <script src="./assets/weex-vue-render/index.js"></script>
     `
-      },
-      {
-        rule: /{{\$script2}}/,
-        scripts: '<script src="' + this.module + '.js"></script>',
       }
     ];
     const weRegArr = [
@@ -93,22 +86,22 @@ const Previewer = {
         rule: /{{\$script}}/,
         scripts: `
 <script src="./assets/weex-html5/weex.js"></script>
-<script src="./assets/weex-init.js"></script>
-    ` },
-      {
-        rule: /{{\$script2}}/,
-        scripts: '',
-      }
+    ` }
     ];
     let regarr = vueRegArr;
     if (this.fileType === 'we') {
       regarr = weRegArr;
+    } else {
+      this.params.webSource = path.join(this.params.temDir, 'temp');
+      if (fs.existsSync(this.params.webSource)) {
+        fse.removeSync(this.params.webSource);
+      }
+      helper.createVueSrc(this.params.source, this.params.webSource);
     }
     helper.replace(path.join(`${this.params.temDir}/`, 'weex.html'), regarr);
   },
   // only for vue previewing on web
   createVueAppEntry() {
-    fse.copySync(`${__dirname}/../vue-template/template/app.js`, `${this.params.temDir}/app.js`);
     helper.replace(`${this.params.temDir}/app.js`, [
       {
         rule: '{{$module}}',
@@ -139,18 +132,18 @@ const Previewer = {
       } else {
         source = this.params.entry;
       }
-      this.build(vueSource, path.join(this.params.temDir, this.module + '.weex.js'), buildOpt, () => {
+      this.build(vueSource, dest + '/[name].weex.js', buildOpt, () => {
         npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
       }, () => {
         this.createVueAppEntry();
-        this.build(this.params.entry, dest, {
+        this.build(this.params.webSource, dest, {
           web: true,
           ext: 'js',
           entry: buildOpt.entry
         }, callback);
       });
       // when you first build
-      this.build(this.params.entry, dest, {
+      this.build(this.params.webSource, dest, {
         web: true,
         ext: 'js',
         entry: buildOpt.entry
