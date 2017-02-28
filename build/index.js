@@ -109,7 +109,6 @@ var Previewer = {
 
     var self = this;
     var buildOpt = {
-      web: true,
       watch: true,
       ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
     };

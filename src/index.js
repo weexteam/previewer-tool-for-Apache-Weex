@@ -112,7 +112,6 @@ const Previewer = {
   buildJSFile(callback) {
     const self = this;
     const buildOpt = {
-      web: true,
       watch: true,
       ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
     };
