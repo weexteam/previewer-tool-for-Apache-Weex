@@ -19,6 +19,7 @@
     window.weex.init({
       appId: location.href,
       source: page,
+      loader: 'xhr',
       rootId: 'weex'
     });
   } else {
