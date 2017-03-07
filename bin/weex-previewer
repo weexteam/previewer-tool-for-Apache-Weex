@@ -5,13 +5,27 @@ const yargs = require('yargs');
 const chalk = require('chalk');
 const preview = require('../build/index');
 
-let commandName = 'weex-previewer';
+let commandName = 'weex';
 
-if (yargs.argv['$0'] === 'weex') {
-  commandName = 'weex';
+if (yargs.argv['$0'] === 'weex-previewer') {
+  commandName = 'weex-previewer';
 }
 
 const userinfo = '\nUsage: ' + commandName + ' <foo/bar/we_file_or_dir_path>  [options]';
+const command = `
+where <command> is one of:
+
+  init                                   create a vue project
+  debug                                  start weex debugger
+  compile                                compile we/vue file
+  create                                 create a weexpack project 
+  platform <add|remove> <ios|android>    add/remove ios/android platform
+  plugin <add|remove> <pluginName>       add/remove weexplugin 
+  run <ios|android>                      build your ios/android app and run
+
+  weex <command> --help      help on <command>  
+`;
+
 const argv = yargs
   .usage(userinfo)
   .option('port', {
@@ -25,9 +39,8 @@ const argv = yargs
   .default('wsport', 8082)
   .describe('wsport', 'websocket listening port number ,default is 8082')
   .describe('entry', 'the entry file in a folder')
-  .epilog('Usage:' + commandName + ' demo/index.vue --port 8087')
+  .epilog(command)
   .argv;
-
 
 const inputPath = argv._[0];
 let badWePath = !!(!inputPath || (inputPath.length < 2));
