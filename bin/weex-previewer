@@ -43,14 +43,18 @@ const argv = yargs
   .argv;
 
 const inputPath = argv._[0];
-let badWePath = !!(!inputPath || (inputPath.length < 2));
+let badWePath = !!(!inputPath || (inputPath.length < 1));
+
+
 try {
   fs.accessSync(inputPath, fs.F_OK);
 } catch (e) {
   badWePath = true;
 }
 if (badWePath) {
-  console.log(chalk.red('File not found!'));
+  if (inputPath) {
+    console.log(chalk.red('File not found!'));
+  }
   yargs.showHelp();
   process.exit(1);
 }

@@ -1,6 +1,6 @@
 {
   "name": "weex-previewer",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "a tool help user to preview their weex files",
   "main": "build/index.js",
   "scripts": {
