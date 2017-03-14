@@ -32,7 +32,7 @@ module.exports = {
   getVueAppContent: function (entryPath) {
     const relativePath = pathTo.resolve(entryPath);
     let contents = '';
-    contents += 'var App = require(\'' + relativePath + '\')\n';
+    contents += 'var App = require(\'' + relativePath.replace(/\\/g, '\\\\') + '\')\n';
     contents += 'App.el = \'#root\'\n';
     contents += 'new Vue(App)\n';
     return contents;

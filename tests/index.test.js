@@ -18,9 +18,8 @@ describe('test main flow', function () {
   });
   this.timeout(10000);
   it('test .vue file build', function (done) {
-    console.log(fs.existsSync('./tests/dist/app.weex.js'));
     setTimeout(function () { 
-      expect(fs.existsSync(pathTo.join(previewDir,'app.weex.js'))).to.equal(true);
+      expect(fs.existsSync(pathTo.join(previewDir,'index.weex.js'))).to.equal(true);
       done();
     }, 6000);
     
