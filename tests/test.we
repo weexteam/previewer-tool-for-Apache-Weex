@@ -1,6 +1,6 @@
 <template>
-  <div class="wrapper" @click="update">
-    <image :src="logoUrl" class="logo"></image>
+  <div class="wrapper" onclick="update">
+    <image src="{{logoUrl}}" class="logo"></image>
     <text class="title">Hello {{target}}</text>
   </div>
 </template>
