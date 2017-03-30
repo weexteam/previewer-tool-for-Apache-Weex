@@ -53,7 +53,7 @@
       el: '#app',
       template: '#app-template',
       data: { 
-        val: url ,
+        val: url + '?hot-reload_controller=1',
         src: "./weex.html?req=" + Math.floor(Math.random() * 100000),
       },
       mounted: function () {
