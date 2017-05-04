@@ -28,7 +28,7 @@
       <div id="qrcode">
         <h2>QRCode</h2>
         <a :href="val" target="_blank"><canvas ref="canvas" width="200" height="200"></canvas></a>
-        <p class="bundle-url"><a :href="val" target="_blank">{{val}}</a></p>
+        <p class="bundle-url"><a :href="url" target="_blank">查看文件源码</a></p>
       </div>
     </div>
   </template>
@@ -53,7 +53,8 @@
       el: '#app',
       template: '#app-template',
       data: { 
-        val: url + '?hot-reload_controller=1',
+        val: url + '?hot-reload_controller=1&_wx_tpl=' + url,
+        url: url,
         src: "./weex.html?req=" + Math.floor(Math.random() * 100000),
       },
       mounted: function () {
