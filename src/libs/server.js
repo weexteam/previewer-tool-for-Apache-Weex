@@ -1,6 +1,6 @@
 const npmlog = require('npmlog');
 const httpServer = require('http-server');
-const localIP = require('quick-local-ip');
+const localIP = require('ip');
 const fse = require('fs-extra');
 const opener = require('opener');
 const WebSocket = require('ws');
@@ -126,7 +126,7 @@ module.exports = {
   },
   // get local network ip
   getLocalIP: function () {
-    return localIP.getLocalIP4();
+    return localIP.address();
   },
   checkPort: function (port) {
     port = parseInt(port, 10);

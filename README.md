@@ -39,3 +39,10 @@ weex-previewer src/index.vue
 | open | boolean     |    true | auto open browser |
 | port | string   | 8801 | specify an port for local web server |
 | wsport | string   | 8804 | specify an websocket port for hot reload |
+
+### ChangeLog
+
+1.3.9
+
+- Fix ip address on server.
+- Replace quick-local-ip module with ip module.

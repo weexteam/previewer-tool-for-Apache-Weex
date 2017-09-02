@@ -2,7 +2,7 @@
 
 var npmlog = require('npmlog');
 var httpServer = require('http-server');
-var localIP = require('quick-local-ip');
+var localIP = require('ip');
 var fse = require('fs-extra');
 var opener = require('opener');
 var WebSocket = require('ws');
@@ -77,11 +77,6 @@ module.exports = {
           clients.splice(_this2.findClient(ws.upgradeReq.url), 1);
         }
       });
-      ws.on('close', function () {
-        ws.close();
-        ws._socket.destroy();
-        clients.splice(_this2.findClient(ws.upgradeReq.url), 1);
-      });
     });
     wsSuccessCallback();
     this.wss = wss;
@@ -140,7 +135,7 @@ module.exports = {
 
   // get local network ip
   getLocalIP: function getLocalIP() {
-    return localIP.getLocalIP4();
+    return localIP.address();
   },
   checkPort: function checkPort(port) {
     port = parseInt(port, 10);
