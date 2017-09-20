@@ -16,6 +16,7 @@ const command = `
 where <command> is one of:
 
   init                                   create a vue project
+  update                                 update weex package version
   debug                                  start weex debugger
   compile                                compile we/vue file
   create                                 create a weexpack project 
