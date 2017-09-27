@@ -35,7 +35,7 @@ var defaultParams = {
 };
 
 var Previewer = {
-  init: function init(args) {
+  init: function init(args, port) {
     // old weex-previewer compatible
     if (args['_'] && args['_'].length > 0 && !args.entry) {
       args.entry = args['_'][0];
@@ -47,10 +47,8 @@ var Previewer = {
     if (!helper.checkEntry(args.entry)) {
       return npmlog.error('Not a ".vue" or ".we" file');
     }
-    if (args.port <= 0 || args.port >= 65336) {
-      this.params.port = 8081;
-    }
     this.params = Object.assign({}, defaultParams, args);
+    this.params.port = port;
     this.params.source = this.params.folder || this.params.entry;
     this.file = path.basename(this.params.entry);
     this.fileType = helper.getFileType(this.file);
@@ -182,6 +180,6 @@ var Previewer = {
   }
 };
 
-module.exports = function (args) {
-  Previewer.init(args);
+module.exports = function (args, port) {
+  Previewer.init(args, port);
 };
