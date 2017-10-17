@@ -13,7 +13,7 @@ module.exports = {
   *  use regular expression to replace some file contents
   * @param filePath
   * @param regarr regular expression array
-  **/
+  * */
   replace: function (filePath, regarr, escape) {
     let content = fs.readFileSync(filePath, {
       encoding: 'utf-8'
@@ -40,11 +40,11 @@ module.exports = {
   createVueSrc: function (src, targetDir) {
     src = src || '.';
     if (!this.basename) {
-      this.basename = src;  
+      this.basename = src;
     }
     const self = this;
     if (this.isDir(src)) {
-      fs.readdirSync(src).forEach(function (file) {
+      fs.readdirSync(src).forEach((file) => {
         const fullpath = pathTo.join(src, file);
         const extname = pathTo.extname(fullpath);
         if (self.isFile(fullpath) && extname === '.vue') {
@@ -58,7 +58,7 @@ module.exports = {
     } else {
       const extname = pathTo.extname(src);
       const entryFile = pathTo.join(targetDir, pathTo.basename(src, extname) + '.js');
-      fs.outputFileSync(pathTo.join(entryFile), self.getVueAppContent(src));  
+      fs.outputFileSync(pathTo.join(entryFile), self.getVueAppContent(src));
     }
   },
   isDir: function (src) {

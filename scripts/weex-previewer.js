@@ -7,14 +7,14 @@ const detect = require('detect-port');
 const preview = require('../build/index');
 
 let commandName = 'weex';
-let port = '8081';
+const port = '8081';
 
 if (yargs.argv['$0'] === 'weex-previewer') {
   commandName = 'weex-previewer';
 }
 
 const userinfo = '\nUsage: ' + commandName + ' <foo/bar/we_file_or_dir_path>  [options]';
-//This command help message is for weex-toolkit.
+// This command help message is for weex-toolkit.
 const command = `
 where <command> is one of:
 
@@ -32,8 +32,7 @@ where <command> is one of:
 
 
 // Check whether the port is occupied
-detect(port).then(open => {
-
+detect(port).then((open) => {
   const argv = yargs
         .usage(userinfo)
         .option('port', {
@@ -58,14 +57,13 @@ detect(port).then(open => {
   }
   if (badWePath) {
     if (inputPath) {
+      /* eslint no-console: ["error", { allow: ["log"] }] */
       console.log(chalk.red('File not found!'));
     }
     yargs.showHelp();
     process.exit(1);
   }
-  
+
   preview(argv, open);
-})
-
-
+});
 

@@ -7,7 +7,7 @@
 * folder: file directory
 * port: speccify the web server port (0-65336)
 * wsport: speccify the websocket server port (0-65336)
-**/
+* */
 
 const fs = require('fs');
 const fse = require('fs-extra');
