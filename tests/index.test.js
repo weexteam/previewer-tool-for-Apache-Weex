@@ -13,7 +13,6 @@ fse.removeSync('./tests/dist/*');
 describe('test main flow', function () {
   pre({
     entry: './tests/index.vue',
- //   temDir: './tests/dist',
     open: false
   });
   this.timeout(10000);

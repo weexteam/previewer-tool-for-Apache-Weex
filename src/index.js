@@ -7,7 +7,7 @@
 * folder: file directory
 * port: speccify the web server port (0-65336)
 * wsport: speccify the websocket server port (0-65336)
-**/
+* */
 
 const fs = require('fs');
 const fse = require('fs-extra');
@@ -33,7 +33,7 @@ const defaultParams = {
 };
 
 const Previewer = {
-  init: function (args) {
+  init: function (args, port) {
     // old weex-previewer compatible
     if (args['_'] && args['_'].length > 0 && !args.entry) {
       args.entry = args['_'][0];
@@ -45,10 +45,8 @@ const Previewer = {
     if (!helper.checkEntry(args.entry)) {
       return npmlog.error('Not a ".vue" or ".we" file');
     }
-    if (args.port <= 0 || args.port >= 65336) {
-      this.params.port = 8081;
-    }
     this.params = Object.assign({}, defaultParams, args);
+    this.params.port = port;
     this.params.source = this.params.folder || this.params.entry;
     this.file = path.basename(this.params.entry);
     this.fileType = helper.getFileType(this.file);
@@ -183,6 +181,6 @@ const Previewer = {
   }
 };
 
-module.exports = function (args) {
-  Previewer.init(args);
+module.exports = function (args, port) {
+  Previewer.init(args, port);
 };

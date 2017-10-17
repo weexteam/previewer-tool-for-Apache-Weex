@@ -17,7 +17,7 @@ module.exports = {
   *  use regular expression to replace some file contents
   * @param filePath
   * @param regarr regular expression array
-  **/
+  * */
   replace: function replace(filePath, regarr, escape) {
     var content = fs.readFileSync(filePath, {
       encoding: 'utf-8'

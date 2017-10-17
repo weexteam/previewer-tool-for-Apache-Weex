@@ -22,6 +22,7 @@ try {
 } catch (err) {
   if ((typeof err === 'undefined' ? 'undefined' : _typeof(err)) === 'object') {
     if (err.code === 'EACCES') {
+      /* eslint no-console: ["error", { allow: ["error"] }] */
       console.error('Error:permission denied.Please apply the write premission to the directory: "' + home + '" ');
     }
   }
