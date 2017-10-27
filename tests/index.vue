@@ -1,31 +1,34 @@
 <template>
-  <div class="wrapper" @click="update">
-    <image :src="logoUrl" class="logo"></image>
-    <text class="title">Hello {{target}}</text>
-    <text class="desc">Now, let's use vue to build your weex app.</text>
+  <div>
+    <wxc-button text="Open Popup"
+                @wxcButtonClicked="buttonClicked"></wxc-button>
+    <wxc-popup width="500"
+               pos="left"
+               :show="isShow"
+               @wxcPopupOverlayClicked="overlayClicked"></wxc-popup>
   </div>
 </template>
 
-<style>
-  .wrapper { align-items: center; margin-top: 120px; }
-  .title { padding-top:40px; padding-bottom: 40px; font-size: 48px; }
-  .logo { width: 360px; height: 156px; }
-  .desc { padding-top: 20px; color:#888; font-size: 24px;}
-</style>
-
 <script>
-
-  export default {
-    data: {
-      logoUrl: 'http://img1.vued.vanthink.cn/vued08aa73a9ab65dcbd360ec54659ada97c.png',
-      target: 'World'
-    },
+  import { WxcButton, WxcPopup } from 'weex-ui';
+  const meta = weex.requireModule('meta')
+  // 配置 viewport 的宽度为 640px
+  meta.setViewport({  
+    width: 200
+  })
+  // or
+  module.exports = {
+    components: { WxcButton, WxcPopup },
+    data: () => ({
+      isShow: false
+    }),
     methods: {
-      update: function (e) {
-        this.target = 'Weex'
-        let a = {name: 'a',ege:122}
-        console.log('target:', this.target)
+      buttonClicked () {
+        this.isShow = true;
+      },
+      overlayClicked () {
+        this.isShow = false;
       }
     }
-  }
+  };
 </script>
