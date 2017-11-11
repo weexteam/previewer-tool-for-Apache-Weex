@@ -50,7 +50,7 @@ const Previewer = {
     this.params.source = this.params.folder || this.params.entry;
     this.file = path.basename(this.params.entry);
     this.fileType = helper.getFileType(this.file);
-    this.module = this.file.replace(/\..+/, '');
+    this.module = this.file.replace(path.extname(this.file), '');
     this.fileDir = process.cwd();
     return this.fileFlow();
   },
