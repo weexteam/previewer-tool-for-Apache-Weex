@@ -40,6 +40,5 @@ detect(port).then(function (open) {
     yargs.showHelp();
     process.exit(1);
   }
-
   preview(argv, open);
 });

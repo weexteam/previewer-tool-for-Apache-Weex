@@ -30,7 +30,6 @@ where <command> is one of:
   weex <command> --help      help on <command>  
 `;
 
-
 // Check whether the port is occupied
 detect(port).then((open) => {
   const argv = yargs
@@ -63,7 +62,5 @@ detect(port).then((open) => {
     yargs.showHelp();
     process.exit(1);
   }
-
   preview(argv, open);
 });
-
