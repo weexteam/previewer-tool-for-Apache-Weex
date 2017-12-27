@@ -9,10 +9,8 @@
 * wsport: speccify the websocket server port (0-65336)
 * */
 
-const fs = require('fs');
-const fse = require('fs-extra');
+const fs = require('fs-extra');
 const npmlog = require('npmlog');
-const builder = require('weex-builder');
 const path = require('path');
 const os = require('os');
 const helper = require('./libs/helper');
@@ -31,6 +29,24 @@ const defaultParams = {
   wsport: '8082',
   open: true
 };
+
+const isWin = process.platform === 'win32';
+// Find the perfect weex-builder
+const weexBuilderPaths = [
+  path.join(process.cwd(), 'node_modules/weex-builder'),
+  path.join(process.env[isWin ? 'USERPROFILE' : 'HOME'], '.xtoolkit/node_modules/weex-builder'),
+  isWin ? '%AppData%\\npm\\node_modules\\weex-builder' : '/usr/local/lib/node_modules/weex-builder'
+];
+let builderPath = 'weex-builder';
+
+while (!fs.existsSync(weexBuilderPaths[0])) {
+  weexBuilderPaths.shift();
+}
+if (weexBuilderPaths[0]) {
+  builderPath = weexBuilderPaths[0];
+}
+
+const builder = require(builderPath);
 
 const Previewer = {
   init: function (args, port) {
@@ -64,11 +80,11 @@ const Previewer = {
   initTemDir() {
     if (!fs.existsSync(this.params.temDir)) {
       this.params.temDir = WEEX_TMP_DIR;
-      fse.mkdirsSync(WEEX_TMP_DIR);
-      fse.copySync(`${__dirname}/../vue-template/template/`, WEEX_TMP_DIR);
+      fs.mkdirsSync(WEEX_TMP_DIR);
+      fs.copySync(`${__dirname}/../vue-template/template/`, WEEX_TMP_DIR);
     }
     // replace old file
-    fse.copySync(`${__dirname}/../vue-template/template/weex.html`, `${this.params.temDir}/weex.html`);
+    fs.copySync(`${__dirname}/../vue-template/template/weex.html`, `${this.params.temDir}/weex.html`);
     const vueRegArr = [
       {
         rule: /{{\$script}}/,
@@ -91,7 +107,7 @@ const Previewer = {
     } else {
       this.params.webSource = path.join(this.params.temDir, 'temp');
       if (fs.existsSync(this.params.webSource)) {
-        fse.removeSync(this.params.webSource);
+        fs.removeSync(this.params.webSource);
       }
       helper.createVueSrc(this.params.source, this.params.webSource);
     }
@@ -129,6 +145,8 @@ const Previewer = {
         source = this.params.entry;
       }
       this.build(vueSource, dest + '/[name].weex.js', buildOpt, () => {
+        builderPath
+        npmlog.info(`Using the builder on ${builderPath}`)
         npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
       }, () => {
         this.createVueAppEntry();
