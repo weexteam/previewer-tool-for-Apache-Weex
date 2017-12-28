@@ -15,6 +15,7 @@ const path = require('path');
 const os = require('os');
 const helper = require('./libs/helper');
 const server = require('./libs/server');
+const builder = require('weex-builder');
 
 const WEEX_TMP_DIR = '.weex_tmp';
 
@@ -30,24 +31,6 @@ const defaultParams = {
   open: true
 };
 
-const isWin = process.platform === 'win32';
-// Find the perfect weex-builder
-const weexBuilderPaths = [
-  path.join(process.cwd(), 'node_modules/weex-builder'),
-  path.join(process.env[isWin ? 'USERPROFILE' : 'HOME'], '.xtoolkit/node_modules/weex-builder'),
-  isWin ? '%AppData%\\npm\\node_modules\\weex-builder' : '/usr/local/lib/node_modules/weex-builder'
-];
-let builderPath = 'weex-builder';
-
-while (!fs.existsSync(weexBuilderPaths[0])) {
-  weexBuilderPaths.shift();
-}
-if (weexBuilderPaths[0]) {
-  builderPath = weexBuilderPaths[0];
-}
-
-/* eslint-disable */ 
-const builder = require(builderPath);
 
 const Previewer = {
   init: function (args, port) {
@@ -146,7 +129,6 @@ const Previewer = {
         source = this.params.entry;
       }
       this.build(vueSource, dest + '/[name].weex.js', buildOpt, () => {
-        npmlog.info(`Using the builder on ${builderPath}`);
         npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
       }, () => {
         this.createVueAppEntry();
