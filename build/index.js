@@ -44,6 +44,7 @@ if (weexBuilderPaths[0]) {
   builderPath = weexBuilderPaths[0];
 }
 
+/* eslint-disable */
 var builder = require(builderPath);
 
 var Previewer = {
@@ -138,7 +139,6 @@ var Previewer = {
         source = this.params.entry;
       }
       this.build(vueSource, dest + '/[name].weex.js', buildOpt, function () {
-        builderPath;
         npmlog.info('Using the builder on ' + builderPath);
         npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
       }, function () {
