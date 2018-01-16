@@ -1,14 +1,13 @@
 /** weex-previewer
-* a tool help user to preview their weex files
-* version 0.9.1
-* example : preview(args);
-* args Object
-* entry: input file
-* folder: file directory
-* port: speccify the web server port (0-65336)
-* wsport: speccify the websocket server port (0-65336)
-* */
-
+ * a tool help user to preview their weex files
+ * version 0.9.1
+ * example : preview(args);
+ * args Object
+ * entry: input file
+ * folder: file directory
+ * port: speccify the web server port (0-65336)
+ * wsport: speccify the websocket server port (0-65336)
+ * */
 const fs = require('fs-extra');
 const npmlog = require('npmlog');
 const path = require('path');
@@ -18,7 +17,6 @@ const server = require('./libs/server');
 const builder = require('weex-builder');
 
 const WEEX_TMP_DIR = '.weex_tmp';
-
 const defaultParams = {
   entry: '',
   folder: '',
@@ -30,8 +28,6 @@ const defaultParams = {
   wsport: '8082',
   open: true
 };
-
-
 const Previewer = {
   init: function (args, port) {
     // old weex-previewer compatible
@@ -69,22 +65,19 @@ const Previewer = {
     }
     // replace old file
     fs.copySync(`${__dirname}/../vue-template/template/weex.html`, `${this.params.temDir}/weex.html`);
-    const vueRegArr = [
-      {
-        rule: /{{\$script}}/,
-        scripts: `
+    const vueRegArr = [{
+      rule: /{{\$script}}/,
+      scripts: `
 <script src="./assets/vue.runtime.js"></script>
 <script src="./assets/weex-vue-render/index.js"></script>
     `
-      }
-    ];
-    const weRegArr = [
-      {
-        rule: /{{\$script}}/,
-        scripts: `
+    }];
+    const weRegArr = [{
+      rule: /{{\$script}}/,
+      scripts: `
 <script src="./assets/weex-html5/weex.js"></script>
-    ` }
-    ];
+    `
+    }];
     let regarr = vueRegArr;
     if (this.fileType === 'we') {
       regarr = weRegArr;
@@ -99,12 +92,10 @@ const Previewer = {
   },
   // only for vue previewing on web
   createVueAppEntry() {
-    helper.replace(`${this.params.temDir}/app.js`, [
-      {
-        rule: '{{$module}}',
-        scripts: path.join(process.cwd(), this.params.source),
-      }
-    ], true);
+    helper.replace(`${this.params.temDir}/app.js`, [{
+      rule: '{{$module}}',
+      scripts: path.join(process.cwd(), this.params.source),
+    }], true);
     this.params.entry = this.params.temDir + '/app.js';
   },
   buildJSFile(callback) {
@@ -122,33 +113,39 @@ const Previewer = {
       buildOpt.entry = this.params.entry;
     }
     if (this.fileType === 'vue') {
-      this.createVueAppEntry();
+      // console.log(buildOpt.entry)
       if (buildOpt.entry) {
         buildOpt.entry = this.params.entry;
       } else {
         source = this.params.entry;
       }
-      this.build(vueSource, dest + '/[name].weex.js', buildOpt, () => {
+      // for weex
+      this.build(vueSource, dest, buildOpt, () => {
         npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
+        // for web
+        this.build(this.params.webSource, dest, {
+          web: true,
+          ext: 'js',
+          entry: buildOpt.entry
+        }, callback);
       }, () => {
-        this.createVueAppEntry();
+        // for web
         this.build(this.params.webSource, dest, {
           web: true,
           ext: 'js',
           entry: buildOpt.entry
         }, callback);
       });
-      // when you first build
-      this.build(this.params.webSource, dest, {
-        web: true,
-        ext: 'js',
-        entry: buildOpt.entry
-      }, callback);
     } else {
       this.build(source, dest, buildOpt, callback);
     }
   },
   build(src, dest, opts, buildcallback, watchCallback) {
+    if (!opts.web && path.extname(src) === '.vue') {
+      dest += '/[name].weex.js';
+    } else if (!opts.web && path.extname(src) !== '.vue') {
+      opts['filename'] = '[name].weex.js';
+    }
     builder.build(src, dest, opts, (err, fileStream) => {
       if (!err) {
         if (this.wsSuccess) {
@@ -180,7 +177,6 @@ const Previewer = {
     });
   }
 };
-
 module.exports = function (args, port) {
   Previewer.init(args, port);
 };

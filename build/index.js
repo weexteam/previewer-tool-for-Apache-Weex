@@ -1,16 +1,15 @@
 'use strict';
 
 /** weex-previewer
-* a tool help user to preview their weex files
-* version 0.9.1
-* example : preview(args);
-* args Object
-* entry: input file
-* folder: file directory
-* port: speccify the web server port (0-65336)
-* wsport: speccify the websocket server port (0-65336)
-* */
-
+ * a tool help user to preview their weex files
+ * version 0.9.1
+ * example : preview(args);
+ * args Object
+ * entry: input file
+ * folder: file directory
+ * port: speccify the web server port (0-65336)
+ * wsport: speccify the websocket server port (0-65336)
+ * */
 var fs = require('fs-extra');
 var npmlog = require('npmlog');
 var path = require('path');
@@ -20,7 +19,6 @@ var server = require('./libs/server');
 var builder = require('weex-builder');
 
 var WEEX_TMP_DIR = '.weex_tmp';
-
 var defaultParams = {
   entry: '',
   folder: '',
@@ -32,7 +30,6 @@ var defaultParams = {
   wsport: '8082',
   open: true
 };
-
 var Previewer = {
   init: function init(args, port) {
     // old weex-previewer compatible
@@ -79,7 +76,8 @@ var Previewer = {
     }];
     var weRegArr = [{
       rule: /{{\$script}}/,
-      scripts: '\n<script src="./assets/weex-html5/weex.js"></script>\n    ' }];
+      scripts: '\n<script src="./assets/weex-html5/weex.js"></script>\n    '
+    }];
     var regarr = vueRegArr;
     if (this.fileType === 'we') {
       regarr = weRegArr;
@@ -118,28 +116,29 @@ var Previewer = {
       buildOpt.entry = this.params.entry;
     }
     if (this.fileType === 'vue') {
-      this.createVueAppEntry();
+      // console.log(buildOpt.entry)
       if (buildOpt.entry) {
         buildOpt.entry = this.params.entry;
       } else {
         source = this.params.entry;
       }
-      this.build(vueSource, dest + '/[name].weex.js', buildOpt, function () {
+      // for weex
+      this.build(vueSource, dest, buildOpt, function () {
         npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
+        // for web
+        _this2.build(_this2.params.webSource, dest, {
+          web: true,
+          ext: 'js',
+          entry: buildOpt.entry
+        }, callback);
       }, function () {
-        _this2.createVueAppEntry();
+        // for web
         _this2.build(_this2.params.webSource, dest, {
           web: true,
           ext: 'js',
           entry: buildOpt.entry
         }, callback);
       });
-      // when you first build
-      this.build(this.params.webSource, dest, {
-        web: true,
-        ext: 'js',
-        entry: buildOpt.entry
-      }, callback);
     } else {
       this.build(source, dest, buildOpt, callback);
     }
@@ -147,6 +146,11 @@ var Previewer = {
   build: function build(src, dest, opts, buildcallback, watchCallback) {
     var _this3 = this;
 
+    if (!opts.web && path.extname(src) === '.vue') {
+      dest += '/[name].weex.js';
+    } else if (!opts.web && path.extname(src) !== '.vue') {
+      opts['filename'] = '[name].weex.js';
+    }
     builder.build(src, dest, opts, function (err, fileStream) {
       if (!err) {
         if (_this3.wsSuccess) {
@@ -178,7 +182,6 @@ var Previewer = {
     });
   }
 };
-
 module.exports = function (args, port) {
   Previewer.init(args, port);
 };

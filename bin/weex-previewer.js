@@ -30,6 +30,13 @@ where <command> is one of:
   weex <command> --help      help on <command>  
 `;
 
+process.on('uncaughtException', (err) => {
+  console.error(err.stack)
+});
+process.on('unhandledRejection', (err) => {
+  console.error(err.stack);
+});
+
 // Check whether the port is occupied
 detect(port).then((open) => {
   const argv = yargs

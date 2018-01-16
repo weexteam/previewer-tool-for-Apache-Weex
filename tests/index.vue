@@ -7,10 +7,10 @@
 </template>
 
 <style scoped>
-  .wrapper { align-items: center; margin-top: 120px; };
-  .title { padding-top:40px; padding-bottom: 40px; font-size: 48px; };
-  .logo { width: 360px; height: 156px; };
-  .desc { padding-top: 20px; color:#888; font-size: 24px;};
+  .wrapper { align-items: center; margin-top: 120px; }
+  .title { padding-top:40px; padding-bottom: 40px; font-size: 48px; }
+  .logo { width: 360px; height: 156px; }
+  .desc { padding-top: 20px; color:#888; font-size: 24px;}
 </style>
 
 <script>
