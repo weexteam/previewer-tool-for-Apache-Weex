@@ -17,7 +17,7 @@ const {
   logger,
   hook,
   helper 
-} =  require('../src/utils')
+} =  require('../lib/utils')
 
 program
 .option('-v, --version', 'output version')
