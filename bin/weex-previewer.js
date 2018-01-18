@@ -1,73 +1,132 @@
 #!/usr/bin/env node
 
 const fs = require('fs-extra');
-const yargs = require('yargs');
+const pkg = require('../package.json');
+const exit = require('exit');
+const path = require('path');
+const program = require('commander');
 const chalk = require('chalk');
 const detect = require('detect-port');
-const preview = require('../build/index');
+const preview = require('../lib');
+const binname = ((args) => {
+  let temp = path.basename(args)
+  return temp;
+})(process.argv[1]);
 
-let commandName = 'weex';
-const port = '8081';
+const { 
+  logger,
+  hook,
+  helper 
+} =  require('../src/utils')
 
-if (yargs.argv['$0'] === 'weex-previewer') {
-  commandName = 'weex-previewer';
+program
+.option('-v, --version', 'output version')
+.option('-h, --help', 'output usage information')
+.option('-e, --entry [target]', 'set the entry file')
+.option('-p, --port [port]', 'set preview server port, default: 8081', '8081')
+.option('--telemetry', 'upload usage data to help us improve the toolkit')
+.option('--verbose', 'display all logs of debugger server')
+.option('--loglevel [loglevel]', 'set log level silent|error|warn|info|log|debug', 'error')
+.parse(process.argv)
+
+// Supporting add the file / directory parameter after the command.
+program['arguments']('[target]').action(function (target) {
+  program.target = target;
+});
+
+// Fix tj's commander bug overwrite --help
+if (program.help === undefined) {
+  program.outputHelp();
+  exit(0);
 }
 
-const userinfo = '\nUsage: ' + commandName + ' <foo/bar/we_file_or_dir_path>  [options]';
-// This command help message is for weex-toolkit.
-const command = `
-where <command> is one of:
 
-  init                                   create a vue project (removed)
-  update                                 update weex package version
-  debug                                  start weex debugger
-  compile                                compile we/vue file
-  create                                 create a weexpack project 
-  platform <add|remove> <ios|android>    add/remove ios/android platform
-  plugin <add|remove> <pluginName>       add/remove weexplugin 
-  run <ios|android>                      build your ios/android app and run
+// Fix tj's commander bug overwrite --version
+if (program.version === undefined) {
+  logger.log(pkg.version);
+  exit(0);
+}
 
-  weex <command> --help      help on <command>  
-`;
+if (program.loglevel) {
+  program.loglevel = program.loglevel.toLowercase && program.loglevel.toLowercase()
+  if(logger.LOGLEVELS.indexOf(program.loglevel) > -1) {
+    logger.setLevel(program.loglevel)
+  }
+}
+
+if (program.verbose) {
+  logger.setLevel('verbose')
+}
+
+if (program.telemetry) {
+  hook.allowTarck()
+}
 
 process.on('uncaughtException', (err) => {
-  console.error(err.stack)
+  logger.error(err.stack)
 });
 process.on('unhandledRejection', (err) => {
-  console.error(err.stack);
+  logger.error(err.stack);
 });
 
-// Check whether the port is occupied
-detect(port).then((open) => {
-  const argv = yargs
-        .usage(userinfo)
-        .option('port', {
-          demand: false
-        })
-        .default('port', open)
-        .describe('port', 'http listening port number ,default is 8081')
-        .option('wsport', {
-          demand: false
-        })
-        .default('wsport', open + 1)
-        .describe('wsport', 'websocket listening port number ,default is 8082')
-        .describe('entry', 'the entry file in a folder')
-        .epilog(command)
-        .argv;
-  const inputPath = argv._[0];
-  let badWePath = !!(!inputPath || (inputPath.length < 1));
-  try {
-    fs.accessSync(inputPath, fs.F_OK);
-  } catch (e) {
-    badWePath = true;
+const pipe = (args) => {
+  if (!args || !args[0]) {
+    program.outputHelp();
+    return false;
   }
-  if (badWePath) {
-    if (inputPath) {
-      /* eslint no-console: ["error", { allow: ["log"] }] */
-      console.log(chalk.red('File not found!'));
+  const target = args[0];
+  const ext = path.extname(target);
+  let result = {
+    folder: '',
+    entry: ''
+  }
+  if(!fs.existsSync(target)){
+    logger.error(`Not found file ${target}`);
+    return false;
+  }
+  if (!ext) {
+    result.folder = target;
+    if (!program.entry) {
+      logger.error(`Need to config the entry file like: \`${binname} ${target} --entry ${path.join(target, 'index.vue')}\``);
+      return false;
     }
-    yargs.showHelp();
-    process.exit(1);
+    else {
+      result.entry = program.entry
+    }
   }
-  preview(argv, open);
-});
+  else {
+    result.entry = target || ''
+  }
+  return result;
+}
+
+detect(program.port).then((open) => {
+  const target = pipe(program.args)
+  if (target) {
+    // If permission to track use
+    let entryCount = 0;
+    let fileType;
+    let options;
+    const entryType = {
+      2: 'single',
+      6: 'folder'
+    }
+    if (target.entry) {
+      entryCount+=2;
+      fileType = helper.getFileType(path.basename(target.entry))
+    }
+    if (target.folder) {
+      entryCount+=4;
+    }
+    options = {
+      entry: !!program.entry,
+      port:!!program.port,
+      verbose:!!program.verbose,
+      loglevel:!!program.loglevel
+    }
+    hook.record('/weex_tool.weex-previewer.sence', { file_type: fileType, entry: entryType[entryCount], options: options});
+
+    logger.info('Bundling source...')
+    preview(target, open);
+  }
+})

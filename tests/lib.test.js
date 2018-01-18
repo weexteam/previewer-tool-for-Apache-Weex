@@ -1,4 +1,4 @@
-var helper = require('../src/libs/helper');
+var helper = require('../src/utils/helper');
 var pathTo = require('path');
 var fse = require('fs-extra');
 var fs = require('fs');

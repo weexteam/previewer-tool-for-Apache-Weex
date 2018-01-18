@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
-const pathTo = require('path');
+const path = require('path');
 
-module.exports = {
+const helper = {
   // check entry file
   checkEntry: function (filename) {
     return /\.(we|vue)$/.test(filename);
@@ -30,7 +30,7 @@ module.exports = {
   },
   // get web preview vue app.js contents
   getVueAppContent: function (entryPath) {
-    const relativePath = pathTo.resolve(entryPath);
+    const relativePath = path.resolve(entryPath);
     let contents = '';
     contents += 'var App = require(\'' + relativePath.replace(/\\/g, '\\\\') + '\')\n';
     contents += 'App.el = \'#root\'\n';
@@ -45,20 +45,22 @@ module.exports = {
     const self = this;
     if (this.isDir(src)) {
       fs.readdirSync(src).forEach((file) => {
-        const fullpath = pathTo.join(src, file);
-        const extname = pathTo.extname(fullpath);
+        const fullpath = path.join(src, file);
+        const extname = path.extname(fullpath);
         if (self.isFile(fullpath) && extname === '.vue') {
-          const entryFile = pathTo.join(targetDir, pathTo.relative(self.basename, src), pathTo.basename(file, extname) + '.js');
-          fs.outputFileSync(pathTo.join(entryFile), self.getVueAppContent(fullpath));
-        } else if (self.isDir(fullpath) && file !== 'build' && file !== 'include') {
-          const subdir = pathTo.join(src, file);
+          const entryFile = path.join(targetDir, path.relative(self.basename, src), path.basename(file, extname) + '.js');
+          fs.outputFileSync(path.join(entryFile), self.getVueAppContent(fullpath));
+        }
+        else if (self.isDir(fullpath) && file !== 'build' && file !== 'include') {
+          const subdir = path.join(src, file);
           self.createVueSrc(subdir, targetDir);
         }
       });
-    } else {
-      const extname = pathTo.extname(src);
-      const entryFile = pathTo.join(targetDir, pathTo.basename(src, extname) + '.js');
-      fs.outputFileSync(pathTo.join(entryFile), self.getVueAppContent(src));
+    }
+    else {
+      const extname = path.extname(src);
+      const entryFile = path.join(targetDir, path.basename(src, extname) + '.js');
+      fs.outputFileSync(path.join(entryFile), self.getVueAppContent(src));
     }
   },
   isDir: function (src) {
@@ -70,3 +72,5 @@ module.exports = {
     return stat.isFile();
   }
 };
+
+module.exports = helper;

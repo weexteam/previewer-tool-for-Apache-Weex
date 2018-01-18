@@ -1,15 +1,15 @@
-const npmlog = require('npmlog');
 const httpServer = require('http-server');
 const localIP = require('ip');
 const fse = require('fs-extra');
 const opener = require('opener');
 const WebSocket = require('ws');
+const logger = require('./logger');
 
 const wsServer = WebSocket.Server;
 const clients = [];
 
-module.exports = {
-  run(args) {
+const server = {
+  run (args) {
     const params = args;
     const options = {
       root: params.dir,
@@ -19,39 +19,39 @@ module.exports = {
     };
     this.rootDir = params.dir;
     if (!this.checkPort(params.port)) {
-      return npmlog.info('HTTP port is illegal and please try another');
+      return logger.info('HTTP port is illegal and please try another');
     }
     this.bindProcessEvent();
-    const server = httpServer.createServer(options);
-    server.listen(params.port, '0.0.0.0', () => {
-      npmlog.info((new Date()) + `http  is listening on port ${params.port}`);
+    const servers = httpServer.createServer(options);
+    servers.listen(params.port, '0.0.0.0', () => {
+      logger.info((new Date()) + `http  is listening on port ${params.port}`);
       const IP = this.getLocalIP();
       const previewUrl = `http://${IP}:${params.port}/?hot-reload_controller&page=${params.module}.js&loader=xhr&wsport=${params.wsport}&type=${params.fileType}`;
       if (params.open) {
         opener(previewUrl);
       }
-      npmlog.info(previewUrl);
+      logger.info(previewUrl);
     });
     this.startWebSocket(params.wsport, params.wsSuccessCallback);
-    return server;
+    return servers;
   },
-  startWebSocket(wsport, wsSuccessCallback) {
+  startWebSocket (wsport, wsSuccessCallback) {
     if (!this.checkPort(wsport)) {
-      return npmlog.info('websocket port is illegal and please try another');
+      return logger.info('websocket port is illegal and please try another');
     }
     const wss = wsServer({
       port: wsport
     });
-    npmlog.info((new Date()) + `WebSocket  is listening on port ${wsport}`);
+    logger.info((new Date()) + `WebSocket  is listening on port ${wsport}`);
     wss.on('connection', (ws) => {
       clients.push(ws);
       ws.on('message', (message) => {
-        npmlog.info('received: %s', message);
+        logger.info('received: %s', message);
         clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send('ws server ok', (err) => {
               if (err) {
-                npmlog.error(err);
+                logger.error(err);
               }
             });
           }
@@ -65,7 +65,7 @@ module.exports = {
       });
       ws.on('error', (error) => {
         if (error) {
-          npmlog.error(error);
+          logger.error(error);
           ws.close();
           ws._socket.destroy();
           clients.splice(this.findClient(ws.upgradeReq.url), 1);
@@ -76,7 +76,7 @@ module.exports = {
     this.wss = wss;
     return wss;
   },
-  findClient(url) {
+  findClient (url) {
     for (let i = 0; i < clients.length; i++) {
       if (clients[i].upgradeReq.url === url) {
         return i;
@@ -85,42 +85,44 @@ module.exports = {
     return null;
   },
   // send web socket messsage to client
-  sendSocketMessage(message) {
+  sendSocketMessage (message) {
     clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message || 'refresh', (err) => {
           if (err) {
-            npmlog.error(err);
+            logger.error(err);
           }
         });
       }
     });
   },
-  bindProcessEvent() {
+  bindProcessEvent () {
     process.on('uncaughtException', (err) => {
       if (err.errno === 'EADDRINUSE') {
-        npmlog.info('The server has been setted up.');
-      } else {
-        npmlog.error(err);
+        logger.info('The server has been setted up.');
+      }
+      else {
+        logger.error(err);
       }
       process.exit(1);
     });
     process.on('SIGINT', () => {
-      npmlog.info('weex  server stoped');
+      logger.info('weex  server stoped');
       process.exit();
     });
     process.on('SIGTERM', () => {
-      npmlog.info('weex server stoped');
+      logger.info('weex server stoped');
       process.exit();
     });
   },
   // remove cache file if in user project directory
-  removeWebFile() {
+  removeWebFile () {
     if (this.rootDir === '.weex_tmp') {
       try {
         fse.removeSync(this.rootDir);
-      } catch (err) {
-        npmlog.error(err);
+      }
+      catch (err) {
+        logger.error(err);
       }
     }
   },
@@ -133,3 +135,5 @@ module.exports = {
     return !!(port >= 0 && port < 65336 && port !== 80 && port !== 23);
   }
 };
+
+module.exports = server;

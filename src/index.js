@@ -9,14 +9,18 @@
  * wsport: speccify the websocket server port (0-65336)
  * */
 const fs = require('fs-extra');
-const npmlog = require('npmlog');
 const path = require('path');
 const os = require('os');
-const helper = require('./libs/helper');
-const server = require('./libs/server');
 const builder = require('weex-builder');
 
+const {
+  logger,
+  helper,
+  server
+} = require('./utils');
+
 const WEEX_TMP_DIR = '.weex_tmp';
+
 const defaultParams = {
   entry: '',
   folder: '',
@@ -30,19 +34,12 @@ const defaultParams = {
 };
 const Previewer = {
   init: function (args, port) {
-    // old weex-previewer compatible
-    if (args['_'] && args['_'].length > 0 && !args.entry) {
-      args.entry = args['_'][0];
-    } else if (Array.isArray(args['_'])) {
-      if (fs.lstatSync(args['_'][0]).isDirectory()) {
-        args.folder = args['_'][0];
-      }
-    }
     if (!helper.checkEntry(args.entry)) {
-      return npmlog.error('Not a ".vue" or ".we" file');
+      return logger.error('Not a ".vue" or ".we" file');
     }
     this.params = Object.assign({}, defaultParams, args);
     this.params.port = port;
+    this.params.wsport = port + 1;
     this.params.source = this.params.folder || this.params.entry;
     this.file = path.basename(this.params.entry);
     this.fileType = helper.getFileType(this.file);
@@ -50,14 +47,17 @@ const Previewer = {
     this.fileDir = process.cwd();
     return this.fileFlow();
   },
-  fileFlow() {
+  fileFlow () {
+    logger.verbose(`init template diretory to ${this.params.temDir}`);
     this.initTemDir();
+    logger.verbose('building JS file');
     this.buildJSFile(() => {
+      logger.verbose('start server');
       this.startServer();
     });
   },
   // build temporary directory for web preview
-  initTemDir() {
+  initTemDir () {
     if (!fs.existsSync(this.params.temDir)) {
       this.params.temDir = WEEX_TMP_DIR;
       fs.mkdirsSync(WEEX_TMP_DIR);
@@ -81,7 +81,8 @@ const Previewer = {
     let regarr = vueRegArr;
     if (this.fileType === 'we') {
       regarr = weRegArr;
-    } else {
+    }
+    else {
       this.params.webSource = path.join(this.params.temDir, 'temp');
       if (fs.existsSync(this.params.webSource)) {
         fs.removeSync(this.params.webSource);
@@ -91,14 +92,14 @@ const Previewer = {
     helper.replace(path.join(`${this.params.temDir}/`, 'weex.html'), regarr);
   },
   // only for vue previewing on web
-  createVueAppEntry() {
+  createVueAppEntry () {
     helper.replace(`${this.params.temDir}/app.js`, [{
       rule: '{{$module}}',
-      scripts: path.join(process.cwd(), this.params.source),
+      scripts: path.join(process.cwd(), this.params.source)
     }], true);
     this.params.entry = this.params.temDir + '/app.js';
   },
-  buildJSFile(callback) {
+  buildJSFile (callback) {
     const self = this;
     const buildOpt = {
       watch: true,
@@ -116,12 +117,13 @@ const Previewer = {
       // console.log(buildOpt.entry)
       if (buildOpt.entry) {
         buildOpt.entry = this.params.entry;
-      } else {
+      }
+      else {
         source = this.params.entry;
       }
       // for weex
       this.build(vueSource, dest, buildOpt, () => {
-        npmlog.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
+        logger.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
         // for web
         this.build(this.params.webSource, dest, {
           web: true,
@@ -136,14 +138,16 @@ const Previewer = {
           entry: buildOpt.entry
         }, callback);
       });
-    } else {
+    }
+    else {
       this.build(source, dest, buildOpt, callback);
     }
   },
-  build(src, dest, opts, buildcallback, watchCallback) {
+  build (src, dest, opts, buildcallback, watchCallback) {
     if (!opts.web && path.extname(src) === '.vue') {
       dest += '/[name].weex.js';
-    } else if (!opts.web && path.extname(src) !== '.vue') {
+    }
+    else if (!opts.web && path.extname(src) !== '.vue') {
       opts['filename'] = '[name].weex.js';
     }
     builder.build(src, dest, opts, (err, fileStream) => {
@@ -152,17 +156,19 @@ const Previewer = {
           if (typeof watchCallback !== 'undefined') {
             watchCallback();
           }
-          npmlog.info(fileStream);
+          logger.info(fileStream);
           server.sendSocketMessage();
-        } else {
+        }
+        else {
           buildcallback();
         }
-      } else {
-        npmlog.error(err);
+      }
+      else {
+        logger.error(err);
       }
     });
   },
-  startServer() {
+  startServer () {
     const self = this;
     server.run({
       dir: this.params.temDir,
@@ -171,7 +177,7 @@ const Previewer = {
       port: this.params.port,
       wsport: this.params.wsport,
       open: this.params.open,
-      wsSuccessCallback() {
+      wsSuccessCallback () {
         self.wsSuccess = true;
       }
     });
