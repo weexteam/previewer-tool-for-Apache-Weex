@@ -39,4 +39,5 @@ buck-out/
 android/app/libs
 android/keystores/debug.keystore
 .weex_tmp
-lib/
+
+src/

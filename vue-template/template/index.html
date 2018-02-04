@@ -55,7 +55,7 @@
       data: { 
         val: url + '?hot-reload_controller=1&_wx_tpl=' + url,
         url: url,
-        src: "./weex.html?req=" + Math.floor(Math.random() * 100000),
+        src: "./weex.html?req=" + Math.floor(Math.random() * 100000) + "&page=" + getUrlParam('page'),
       },
       mounted: function () {
         var qrcodedraw = new QRCodeLib.QRCodeDraw()

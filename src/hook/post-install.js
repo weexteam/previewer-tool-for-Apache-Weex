@@ -10,12 +10,14 @@ const previewDir = path.join(home, WEEX_TEMP);
 try {
   if (!fse.ensureDirSync(previewDir)) {
     fse.mkdirsSync(previewDir);
-  } else {
+  }
+  else {
     fse.removeSync(previewDir);
     fse.mkdirsSync(previewDir);
   }
   fse.copySync('./vue-template/template', previewDir);
-} catch (err) {
+}
+catch (err) {
   if (typeof err === 'object') {
     if (err.code === 'EACCES') {
       /* eslint no-console: ["error", { allow: ["error"] }] */
