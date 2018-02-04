@@ -60,7 +60,7 @@ const fill = (num) => {
 const log = loglevel => (message) => {
   const isVerbose = DEFAULT_LOGLEVEL === LOGLEVEL.VERBOSE;
   if (!SEVERITY[DEFAULT_LOGLEVEL] || SEVERITY[DEFAULT_LOGLEVEL] > SEVERITY[loglevel]) {
-      // return instance to allow to chain calls
+    // return instance to allow to chain calls
     return;
   }
   if (message instanceof Error || (isVerbose && loglevel === 'error')) {
