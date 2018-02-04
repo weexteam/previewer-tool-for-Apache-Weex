@@ -54,7 +54,9 @@ const formatError = (error, isVerbose) => {
   }
   return message;
 };
-
+const fill = (num) => {
+  return num > 9 ? num : `0${num}`;
+};
 const log = loglevel => (message) => {
   const isVerbose = DEFAULT_LOGLEVEL === LOGLEVEL.VERBOSE;
   if (!SEVERITY[DEFAULT_LOGLEVEL] || SEVERITY[DEFAULT_LOGLEVEL] > SEVERITY[loglevel]) {
@@ -70,7 +72,7 @@ const log = loglevel => (message) => {
   let sep;
   if (SEVERITY[loglevel] >= SEVERITY[LOGLEVEL.INFO]) {
     time = new Date();
-    prefix = chalk.gray(`${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}`);
+    prefix = chalk.gray(`${fill(time.getHours())}:${fill(time.getMinutes())}:${fill(time.getSeconds())}`);
     sep = ':';
     console.log(chalk.grey(prefix), sep, chalk[color](message));
   }
