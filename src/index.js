@@ -30,14 +30,16 @@ const defaultParams = {
   port: '8081',
   host: '127.0.0.1',
   wsport: '8082',
-  open: true
+  open: true,
+  options: {}
 };
 const Previewer = {
-  init: function (args, port) {
+  init: function (args, port, options) {
     if (!helper.checkEntry(args.entry)) {
       return logger.error('Not a ".vue" or ".we" file');
     }
     this.params = Object.assign({}, defaultParams, args);
+    this.params.options = options;
     this.params.port = port;
     this.params.wsport = port + 1;
     this.params.source = this.params.folder || this.params.entry;
@@ -103,7 +105,8 @@ const Previewer = {
     const self = this;
     const buildOpt = {
       watch: true,
-      ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType
+      ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType,
+      ...this.params.options
     };
     let source = this.params.entry;
     const dest = this.params.temDir;
@@ -150,23 +153,28 @@ const Previewer = {
     else if (!opts.web && path.extname(src) !== '.vue') {
       opts['filename'] = '[name].weex.js';
     }
-    builder.build(src, dest, opts, (err, fileStream) => {
-      if (!err) {
-        if (this.wsSuccess) {
-          if (typeof watchCallback !== 'undefined') {
-            watchCallback();
+    builder.build(src, dest,
+      {
+        ...opts,
+        ...this.params.options
+      },
+      (err, fileStream) => {
+        if (!err) {
+          if (this.wsSuccess) {
+            if (typeof watchCallback !== 'undefined') {
+              watchCallback();
+            }
+            logger.info(fileStream);
+            server.sendSocketMessage();
           }
-          logger.info(fileStream);
-          server.sendSocketMessage();
+          else {
+            buildcallback();
+          }
         }
         else {
-          buildcallback();
+          logger.error(err);
         }
-      }
-      else {
-        logger.error(err);
-      }
-    });
+      });
   },
   startServer () {
     const self = this;
@@ -183,6 +191,6 @@ const Previewer = {
     });
   }
 };
-module.exports = function (args, port) {
-  Previewer.init(args, port);
+module.exports = function (args, port, options) {
+  Previewer.init(args, port, options);
 };

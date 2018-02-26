@@ -1,6 +1,6 @@
 {
   "name": "weex-previewer",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "lockfileVersion": 1,
   "requires": true,
   "dependencies": {
@@ -7384,9 +7384,9 @@
       "dev": true
     },
     "weex-builder": {
-      "version": "0.3.15",
-      "resolved": "https://registry.npmjs.org/weex-builder/-/weex-builder-0.3.15.tgz",
-      "integrity": "sha512-1qKYev3EuUqsJaWTS3a3i7t9ltvvKUHgVIvXa/fkj6ya/jVI3J1pvGp9p+4GQre3tGNohFKeZUAxfuTcAz29xQ==",
+      "version": "0.3.16",
+      "resolved": "https://registry.npmjs.org/weex-builder/-/weex-builder-0.3.16.tgz",
+      "integrity": "sha512-7PAlK2ldc8MyFZgy3izFeDa3HEfSk813gOeUpV/wHrSoW2Fg8sy8rV2Zi/1I3iEvnS+TpO+fQBtECdFxb3VVWA==",
       "requires": {
         "babel-loader": "7.1.2",
         "babel-plugin-add-module-exports": "0.2.1",
@@ -7408,6 +7408,7 @@
         "vue-loader": "12.2.2",
         "vue-style-loader": "3.0.3",
         "webpack": "3.10.0",
+        "webpack-merge": "4.1.2",
         "weex-loader": "0.7.2",
         "weex-styler": "0.2.6"
       },
@@ -14263,6 +14264,21 @@
               "requires": {
                 "has-flag": "2.0.0"
               }
+            }
+          }
+        },
+        "webpack-merge": {
+          "version": "4.1.2",
+          "resolved": "https://registry.npmjs.org/webpack-merge/-/webpack-merge-4.1.2.tgz",
+          "integrity": "sha512-/0QYwW/H1N/CdXYA2PNPVbsxO3u2Fpz34vs72xm03SRfg6bMNGfMJIQEpQjKRvkG2JvT6oRJFpDtSrwbX8Jzvw==",
+          "requires": {
+            "lodash": "4.17.5"
+          },
+          "dependencies": {
+            "lodash": {
+              "version": "4.17.5",
+              "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.5.tgz",
+              "integrity": "sha512-svL3uiZf1RwhH+cWrfZn3A4+U58wbP0tGVTLQPbjplZxZ8ROD9VLuNgsRniTlLe7OlSqR79RUehXgpBW/s0IQw=="
             }
           }
         },

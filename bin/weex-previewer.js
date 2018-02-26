@@ -23,6 +23,7 @@ program
 .option('-v, --version', 'output version')
 .option('-h, --help', 'output usage information')
 .option('-e, --entry [target]', 'set the entry file')
+.option('-c, --config [path]', 'set webpack configuration file to override the built-in configuration')
 .option('-p, --port [port]', 'set preview server port, default: 8081', '8081')
 .option('--telemetry', 'upload usage data to help us improve the toolkit')
 .option('--verbose', 'display all logs of debugger server')
@@ -107,6 +108,7 @@ detect(program.port).then((open) => {
     let entryCount = 0;
     let fileType;
     let options;
+    let optionflags;
     const entryType = {
       2: 'single',
       6: 'folder'
@@ -118,15 +120,19 @@ detect(program.port).then((open) => {
     if (target.folder) {
       entryCount+=4;
     }
-    options = {
+    optionflags = {
       entry: !!program.entry,
       port:!!program.port,
       verbose:!!program.verbose,
+      config:!!program.config,
       loglevel:!!program.loglevel
     }
     hook.record('/weex_tool.weex-previewer.sence', { file_type: fileType, entry: entryType[entryCount], options: options});
 
+    options = {
+      config:program.config
+    }
     logger.info('Bundling source...')
-    preview(target, open);
+    preview(target, open, options);
   }
 })
