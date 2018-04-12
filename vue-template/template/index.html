@@ -40,13 +40,18 @@
       }
     };
     function _geti18n(key) {
+      // Return "Translation Error" if key is invalid.
+      if(!i18n[key]) {
+        return 'Translation Error';
+      }
+
       // "en-US" becomes ["en", "US"];
       var lang = navigator.language.split('-');
 
       // 1. Use regional language if defined. (E.g. en-US)
       // 2. Use specific language if defined. (E.g. en)
       // 3. Fallback to default language. (default = Chinese)
-      // 4. Fallback to "Translation Error" if the translation is missing.
+      // 4. Fallback to "Translation Error" if the language translation and default are missing.
       return i18n[key][navigator.language] 
         || i18n[key][lang[0]] 
         || i18n[key]['default'] 
