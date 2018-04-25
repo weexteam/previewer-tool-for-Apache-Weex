@@ -1,10 +1,10 @@
 {
   "name": "weex-previewer",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "a tool help user to preview their weex files",
   "main": "lib/index.js",
   "scripts": {
-    "test": "npm run lint && mocha tests/*.test.js",
+    "test": "npm run lint && mocha test/*.test.js",
     "lint": "eslint src --fix",
     "build": "babel src --out-dir lib",
     "dev": "babel src --out-dir lib --watch",
@@ -54,7 +54,8 @@
   "homepage": "https://github.com/weexteam/weex-previewer#readme",
   "changelog": {
     "messages": [
-      "Fixed the wrong output while using `--min` option."
+      "Rewrite weex preview help infomation.",
+      "Fix https://github.com/weexteam/weex-toolkit/issues/373."
     ]
   }
 }

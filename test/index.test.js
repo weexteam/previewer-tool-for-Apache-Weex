@@ -11,15 +11,14 @@ const previewDir = pathTo.join(os.homedir(), WEEX_TEMP);
 fse.removeSync('./tests/dist/*');
 describe('test main flow', function () {
   pre({
-    entry: './tests/index.vue',
+    entry: './test/template/vue/demo/index.vue',
     open: false
   });
   this.timeout(10000);
   console.log(previewDir)
   it('test .vue file build', function (done) {
     setTimeout(function () { 
-      console.log(fs.existsSync(pathTo.join(previewDir,'index.weex.js')))
-      expect(fs.existsSync(pathTo.join(previewDir,'index.weex.js'))).to.equal(true);
+      expect(fs.existsSync(pathTo.join(previewDir,'dist/test/template/vue/demo/index.weex.js'))).to.equal(true);
       done();
     }, 6000);
   });
