@@ -1,10 +1,10 @@
 {
   "name": "weex-previewer",
-  "version": "1.4.8",
+  "version": "1.5.1",
   "description": "a tool help user to preview their weex files",
   "main": "lib/index.js",
   "scripts": {
-    "test": "npm run lint && mocha tests/*.test.js",
+    "test": "npm run lint && mocha test/*.test.js",
     "lint": "eslint src --fix",
     "build": "babel src --out-dir lib",
     "dev": "babel src --out-dir lib --watch",
@@ -33,7 +33,7 @@
     "opener": "^1.4.1",
     "path": "^0.12.7",
     "request": "^2.83.0",
-    "weex-builder": "^0.3.16",
+    "weex-builder": "^0.3.19",
     "weex-vue-render": "^0.12.21",
     "ws": "^1.1.0"
   },
@@ -51,5 +51,11 @@
   "bugs": {
     "url": "https://github.com/weexteam/weex-previewer/issues"
   },
-  "homepage": "https://github.com/weexteam/weex-previewer#readme"
+  "homepage": "https://github.com/weexteam/weex-previewer#readme",
+  "changelog": {
+    "messages": [
+      "Rewrite weex preview help infomation.",
+      "Fix https://github.com/weexteam/weex-toolkit/issues/373."
+    ]
+  }
 }

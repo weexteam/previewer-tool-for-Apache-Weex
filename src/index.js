@@ -1,13 +1,3 @@
-/** weex-previewer
- * a tool help user to preview their weex files
- * version 0.9.1
- * example : preview(args);
- * args Object
- * entry: input file
- * folder: file directory
- * port: speccify the web server port (0-65336)
- * wsport: speccify the websocket server port (0-65336)
- * */
 const fs = require('fs-extra');
 const path = require('path');
 const os = require('os');
@@ -43,7 +33,12 @@ const Previewer = {
     this.params.port = port;
     this.params.wsport = port + 1;
     this.params.source = this.params.folder || this.params.entry;
-    this.file = path.basename(this.params.entry);
+    if (this.params.folder) {
+      this.file = path.relative(this.params.source, this.params.entry);
+    }
+    else {
+      this.file = this.params.entry;
+    }
     this.fileType = helper.getFileType(this.file);
     this.module = this.file.replace(path.extname(this.file), '');
     this.fileDir = process.cwd();
@@ -102,22 +97,24 @@ const Previewer = {
     this.params.entry = this.params.temDir + '/app.js';
   },
   buildJSFile (callback) {
-    const self = this;
     const buildOpt = {
       watch: true,
       ext: /\.js$/.test(this.params.entry) ? 'js' : this.fileType,
       ...this.params.options
     };
     let source = this.params.entry;
-    const dest = this.params.temDir;
+    const dest = path.join(this.params.temDir, 'dist');
+    let webDest;
     let vueSource = this.params.source;
     if (this.params.folder) {
       source = this.params.folder;
       vueSource = this.params.folder;
       buildOpt.entry = this.params.entry;
     }
+    else {
+      webDest = path.join(this.params.temDir, 'dist', this.params.entry.replace(path.basename(this.params.entry), ''));
+    }
     if (this.fileType === 'vue') {
-      // console.log(buildOpt.entry)
       if (buildOpt.entry) {
         buildOpt.entry = this.params.entry;
       }
@@ -126,19 +123,17 @@ const Previewer = {
       }
       // for weex
       this.build(vueSource, dest, buildOpt, () => {
-        logger.info('weex JS bundle saved at ' + path.resolve(self.params.temDir));
+        logger.info('weex JS bundle saved at ' + path.resolve(this.params.temDir));
         // for web
-        this.build(this.params.webSource, dest, {
+        this.build(this.params.webSource, webDest || dest, {
           web: true,
-          ext: 'js',
-          entry: buildOpt.entry
+          ext: 'js'
         }, callback);
       }, () => {
         // for web
-        this.build(this.params.webSource, dest, {
+        this.build(this.params.webSource, webDest || dest, {
           web: true,
-          ext: 'js',
-          entry: buildOpt.entry
+          ext: 'js'
         }, callback);
       });
     }

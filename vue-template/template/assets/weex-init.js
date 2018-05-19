@@ -4,7 +4,7 @@
     var match = location.search.match(reg)
     return match && match[1]
   };
-  var page = getUrlParam('page') || 'index.js';
+  var page = 'dist/' + getUrlParam('page') || 'index.js';
   var bundle = document.createElement('script')
   // only for web
   bundle.src = page

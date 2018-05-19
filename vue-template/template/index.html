@@ -25,9 +25,10 @@
         <div class="earpiece"></div>
         <div class="home-btn"></div>
       </div>
+
       <div id="qrcode">
-        <h2>QRCode</h2>
         <a :href="val" target="_blank"><canvas ref="canvas" width="200" height="200"></canvas></a>
+        <p class="qrcode-tips">Use <a target="_blank" href="https://weex-project.io/playground.html">Weex playground app</a> to scan it.</p>
         <p class="bundle-url"><a :href="url" target="_blank">{{ bundleText }}</a></p>
       </div>
     </div>
@@ -71,7 +72,7 @@
     var hostname = location.hostname;
     var wsport = getUrlParam('wsport') || '8082';
     var port = location.port ? ':' + location.port : '';
-    var url = protocol + hostname + port + location.pathname.replace(/\/index\.html$/, '/').replace(/\/$/,'/' + module);
+    var url = protocol + hostname + port + '/dist' + location.pathname.replace(/\/index\.html$/, '/').replace(/\/$/,'/' + module);
     
     new Vue({
       el: '#app',

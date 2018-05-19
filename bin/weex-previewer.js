@@ -8,10 +8,11 @@ const program = require('commander');
 const chalk = require('chalk');
 const detect = require('detect-port');
 const preview = require('../lib');
-const binname = ((args) => {
-  let temp = path.basename(args)
-  return temp;
-})(process.argv[1]);
+
+const binname = 'weex';
+
+// rename the cmdname for weex-toolkit
+program._name = `${binname} preview`;
 
 const { 
   logger,
