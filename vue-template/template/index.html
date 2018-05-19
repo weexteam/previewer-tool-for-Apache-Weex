@@ -29,11 +29,35 @@
       <div id="qrcode">
         <a :href="val" target="_blank"><canvas ref="canvas" width="200" height="200"></canvas></a>
         <p class="qrcode-tips">Use <a target="_blank" href="https://weex-project.io/playground.html">Weex playground app</a> to scan it.</p>
-        <p class="bundle-url"><a :href="url" target="_blank">查看文件源码</a></p>
+        <p class="bundle-url"><a :href="url" target="_blank">{{ bundleText }}</a></p>
       </div>
     </div>
   </template>
   <script>
+    var i18n = {
+      bundleText: {
+        en: 'View Source Code',
+        default: '查看文件源码'
+      }
+    };
+    function _geti18n(key) {
+      // Return "Translation Error" if key is invalid.
+      if(!i18n[key]) {
+        return 'Translation Error';
+      }
+
+      // "en-US" becomes ["en", "US"];
+      var lang = navigator.language.split('-');
+
+      // 1. Use regional language if defined. (E.g. en-US)
+      // 2. Use specific language if defined. (E.g. en)
+      // 3. Fallback to default language. (default = Chinese)
+      // 4. Fallback to "Translation Error" if the language translation and default are missing.
+      return i18n[key][navigator.language] 
+        || i18n[key][lang[0]] 
+        || i18n[key]['default'] 
+        || 'Translation Error';
+    }
     function getUrlParam(key,searchStr) {
       var reg = new RegExp('[?|&]' + key + '=([^&]+)');
       searchStr = searchStr || location.search;
@@ -57,6 +81,7 @@
         val: url + '?hot-reload_controller=1&_wx_tpl=' + url,
         url: url,
         src: "./weex.html?req=" + Math.floor(Math.random() * 100000) + "&page=" + getUrlParam('page'),
+        bundleText: _geti18n('bundleText'),
       },
       mounted: function () {
         var qrcodedraw = new QRCodeLib.QRCodeDraw()
